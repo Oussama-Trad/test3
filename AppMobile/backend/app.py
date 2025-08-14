@@ -17,7 +17,7 @@ app.config['SECRET_KEY'] = '123'  # JWT_SECRET_KEY
 from extensions import db, employee_collection, location_collection, departement_collection
 
 # Importer et enregistrer le blueprint documents APRÈS la définition de app, db, token_required, etc.
-from document_routes import bp as documents_bp
+from documents import bp as documents_bp
 app.register_blueprint(documents_bp)
 
 def token_required(f):
@@ -49,23 +49,28 @@ def token_required(f):
 def register():
     try:
         data = request.get_json()
-        
+        print('--- Données reçues pour inscription ---')
+        print(data)
         # Validation
         required_fields = ['nom', 'prenom', 'id', 'adresse1', 'numTel', 'location', 'departement', 'password']
         for field in required_fields:
             if field not in data:
+                print(f"Champ manquant côté backend : {field}")
                 return jsonify({'message': f'{field} is required'}), 400
-        
         # Check if employee already exists
         if employee_collection.find_one({'id': data['id']}):
+            print("ID déjà existant")
             return jsonify({'message': 'Employee with this ID already exists'}), 400
-        
         if employee_collection.find_one({'numTel': data['numTel']}):
+            print("Numéro de téléphone déjà existant")
             return jsonify({'message': 'Employee with this phone number already exists'}), 400
-        
         # Hash password
         hashed_password = generate_password_hash(data['password'])
-        
+        # Chercher l'ID MongoDB pour location et departement
+        location_doc = location_collection.find_one({'nom': data['location']})
+        departement_doc = departement_collection.find_one({'nom': data['departement']})
+        location_id = str(location_doc['_id']) if location_doc else data['location']
+        departement_id = str(departement_doc['_id']) if departement_doc else data['departement']
         # Create employee document
         employee = {
             'nom': data['nom'],
@@ -75,22 +80,19 @@ def register():
             'adresse2': data.get('adresse2', ''),
             'numTel': data['numTel'],
             'numTelParentale': data.get('numTelParentale', ''),
-            'location': data['location'],
-            'departement': data['departement'],
+            'location': location_id,
+            'departement': departement_id,
             'photoDeProfil': data.get('photoDeProfil', ''),
             'password': hashed_password,
             'createdAt': datetime.utcnow(),
             'updatedAt': datetime.utcnow()
         }
-        
         result = employee_collection.insert_one(employee)
-        
         # Generate JWT token
         token = jwt.encode({
             'adresse1': data['adresse1'],
             'exp': datetime.utcnow() + timedelta(days=7)
         }, app.config['SECRET_KEY'], algorithm='HS256')
-        
         return jsonify({
             'message': 'Employee registered successfully',
             'token': token,
@@ -103,8 +105,8 @@ def register():
                 'departement': data['departement']
             }
         }), 201
-        
     except Exception as e:
+        print('Erreur backend lors de l’inscription :', str(e))
         return jsonify({'message': str(e)}), 500
 
 @app.route('/api/login', methods=['POST'])

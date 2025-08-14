@@ -6,8 +6,23 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<style>
+    body { background: #1D2D51; }
+    .container { max-width: 1100px; margin: 40px auto; background: #fff; border-radius: 16px; padding: 32px; box-shadow: 0 2px 16px #0002; }
+    h2 { color: #1D2D51; text-align: center; margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: 12px 8px; text-align: left; color: #1D2D51; font-size: 15px; }
+    th { background: #f0f2fa; font-size: 16px; }
+    tr:nth-child(even) { background: #f7f8fc; }
+    tr:hover { background: #e6eaf7; }
+    select, button { padding: 6px 10px; border-radius: 6px; border: 1px solid #1D2D51; font-size: 14px; }
+    button { background: #1D2D51; color: #fff; font-weight: bold; margin-left: 6px; cursor: pointer; }
+    a { color: #1D2D51; display: block; text-align: center; margin-top: 24px; text-decoration: underline; }
+    td { max-width: 180px; overflow-x: auto; white-space: nowrap; text-overflow: ellipsis; }
+</style>
 <div class="container">
     <h2>Demandes de documents</h2>
+    <div style="overflow-x:auto;">
     <table>
         <thead>
         <tr>
@@ -23,10 +38,10 @@
         </thead>
         <tbody>
         <tr th:each="req : ${requests}">
-            <td th:text="${req.employeeId}"></td>
-            <td th:text="${req.documentTypeId}"></td>
-            <td th:text="${req.departmentId}"></td>
-            <td th:text="${req.locationId}"></td>
+            <td th:text="${employeeMap.containsKey(req.employeeId) ? employeeMap[req.employeeId] : 'Inconnu'}"></td>
+            <td th:text="${docTypeMap.containsKey(req.documentTypeId) ? docTypeMap[req.documentTypeId] : 'Inconnu'}"></td>
+            <td th:text="${departementMap.containsKey(req.departmentId) ? departementMap[req.departmentId] : 'Inconnu'}"></td>
+            <td th:text="${locationMap.containsKey(req.locationId) ? locationMap[req.locationId] : 'Inconnu'}"></td>
             <td th:text="${#dates.format(req.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
             <td th:text="${req.status}"></td>
             <td th:text="${req.commentaire}"></td>
@@ -44,6 +59,7 @@
         </tr>
         </tbody>
     </table>
+    </div>
     <a href="/">Retour accueil</a>
 </div>
 </body>

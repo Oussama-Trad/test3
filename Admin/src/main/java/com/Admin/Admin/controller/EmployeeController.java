@@ -96,7 +96,7 @@ public class EmployeeController {
 
     @PostMapping("/{id}/edit")
     public String updateEmployee(@PathVariable String id, @ModelAttribute Employee employee) {
-        employee.set_id(id);
+    employee.setId(id);
         employeeRepository.save(employee);
         return "redirect:/employees/" + id;
     }

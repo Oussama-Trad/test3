@@ -30,6 +30,23 @@ const RegisterScreen = ({ navigation }) => {
   const handleChange = (key, value) => setForm({ ...form, [key]: value });
 
   const handleRegister = async () => {
+    // Validation frontend
+    const requiredFields = [
+      { key: 'id', label: 'ID' },
+      { key: 'nom', label: 'Nom' },
+      { key: 'prenom', label: 'Prénom' },
+      { key: 'password', label: 'Mot de passe' },
+      { key: 'adresse1', label: 'Adresse 1' },
+      { key: 'numTel', label: 'Téléphone' },
+      { key: 'location', label: 'Location' },
+      { key: 'departement', label: 'Département' }
+    ];
+    for (let field of requiredFields) {
+      if (!form[field.key] || form[field.key].trim() === '') {
+        Alert.alert('Champ manquant', `Veuillez remplir le champ obligatoire : ${field.label}`);
+        return;
+      }
+    }
     const res = await register(form);
     if (res && res.message === 'Employee registered successfully' && res.token && res.user) {
       setUser(res.user);

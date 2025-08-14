@@ -7,10 +7,9 @@ import java.util.Date;
 @Document(collection = "employee")
 public class Employee {
     @Id
-    private String _id;
+    private String id;
     private String nom;
     private String prenom;
-    private String id;
     private String adresse1;
     private String adresse2;
     private String numTel;
@@ -24,12 +23,7 @@ public class Employee {
 
     public Employee() {}
 
-    public String get_id() {
-        return _id;
-    }
-    public void set_id(String _id) {
-        this._id = _id;
-    }
+    // plus de get/set _id
     public String getNom() {
         return nom;
     }
