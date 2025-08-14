@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Types de documents</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="admin-layout">
+    <div th:replace="~{fragments/navbar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="container">
+            <h2>Types de documents</h2>
+            <a th:href="@{/document-types/create}" class="btn">Ajouter un type</a>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Titre</th>
+                        <th>Description</th>
+                        <th>Date de création</th>
+                        <th>Créé par</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="docType : ${documentTypes}">
+                        <td th:text="${docType.titre}"></td>
+                        <td th:text="${docType.description}"></td>
+                        <td th:text="${#temporals.format(docType.dateCreation, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td th:text="${docType.createdBy}"></td>
+                        <td>
+                            <a th:href="@{'/document-types/' + ${docType.id} + '/edit'}" class="btn-small">Modifier</a>
+                            <form th:action="@{'/document-types/' + ${docType.id} + '/delete'}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-small btn-danger" onclick="return confirm('Supprimer ce type ?')">Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

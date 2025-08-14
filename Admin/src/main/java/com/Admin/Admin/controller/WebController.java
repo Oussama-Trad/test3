@@ -37,12 +37,21 @@ public class WebController {
 
     @PostMapping("/register")
     public String register(@RequestParam String nom, @RequestParam String prenom, @RequestParam String adresse,
-                          @RequestParam String numTel, @RequestParam String location, @RequestParam String departement,
+                          @RequestParam String numTel, @RequestParam(required = false) String location, @RequestParam(required = false) String departement,
                           @RequestParam String email, @RequestParam String password, @RequestParam String role, Model model) {
         if (role.equals("superadmin")) {
+            // Si location ou departement sont null, on les force à ""
+            if (location == null) location = "";
+            if (departement == null) departement = "";
             SuperAdmin superAdmin = new SuperAdmin(nom, prenom, adresse, numTel, email, passwordEncoder.encode(password));
+            superAdmin.setLocation(location);
+            superAdmin.setDepartement(departement);
+            superAdmin.setRole("superadmin");
             superAdminRepository.save(superAdmin);
         } else {
+            // Si location ou departement sont null, on les force à ""
+            if (location == null) location = "";
+            if (departement == null) departement = "";
             Admin admin = new Admin(nom, prenom, adresse, numTel, location, departement, email, passwordEncoder.encode(password));
             adminRepository.save(admin);
         }

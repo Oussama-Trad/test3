@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier un type de document</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="admin-layout">
+    <div th:replace="~{fragments/navbar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="container">
+            <h2>Modifier un type de document</h2>
+            <form th:action="@{'/document-types/' + ${documentType.id} + '/edit'}" th:object="${documentType}" method="post">
+                <input type="text" th:field="*{titre}" placeholder="Titre" required>
+                <textarea th:field="*{description}" placeholder="Description (facultatif)"></textarea>
+                <button type="submit" class="btn">Enregistrer</button>
+                <a th:href="@{/document-types}" class="btn">Annuler</a>
+            </form>
+        </div>
+    </main>
+</div>
+</body>
+</html>
