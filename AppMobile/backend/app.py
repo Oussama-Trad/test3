@@ -1,25 +1,24 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import jwt
 import os
 from functools import wraps
+from auth_utils import token_required
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configuration
 app.config['SECRET_KEY'] = '123'  # JWT_SECRET_KEY
-MONGODB_URI = 'mongodb+srv://oussamatrzd19:oussama123@leoniapp.grhnzgz.mongodb.net/'
-client = MongoClient(MONGODB_URI)
-db = client['DBLEONI']
 
-# Collections
-employee_collection = db['employee']
-location_collection = db['location']
-departement_collection = db['departement']
+# Connexion MongoDB et collections centralisées dans extensions.py
+from extensions import db, employee_collection, location_collection, departement_collection
+
+# Importer et enregistrer le blueprint documents APRÈS la définition de app, db, token_required, etc.
+from document_routes import bp as documents_bp
+app.register_blueprint(documents_bp)
 
 def token_required(f):
     @wraps(f)

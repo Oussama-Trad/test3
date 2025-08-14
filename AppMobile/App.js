@@ -10,6 +10,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from './views/screens/HomeScreen';
 import MessagesScreen from './views/screens/MessagesScreen';
+import DocumentScreen from './views/screens/DocumentScreen';
 import { UserProvider, UserContext } from './context/UserContext';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -36,9 +37,10 @@ function MainTabs() {
         tabBarStyle: { backgroundColor: '#fff' },
       })}
     >
-      <Tab.Screen name="Accueil" component={HomeScreen} />
-      <Tab.Screen name="Mon Profil" component={ProfileScreen} />
-      <Tab.Screen name="Messagerie" component={MessagesScreen} />
+  <Tab.Screen name="Accueil" component={HomeScreen} />
+  <Tab.Screen name="Documents" component={DocumentScreen} />
+  <Tab.Screen name="Mon Profil" component={ProfileScreen} />
+  <Tab.Screen name="Messagerie" component={MessagesScreen} />
     </Tab.Navigator>
   );
 }
