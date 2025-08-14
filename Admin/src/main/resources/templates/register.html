@@ -39,7 +39,7 @@
                 const select = document.getElementById('locationSelect');
                 locations.forEach(loc => {
                     const opt = document.createElement('option');
-                    opt.value = loc.id || loc;
+                    opt.value = loc.id || loc._id || loc;
                     opt.textContent = loc.nom || loc;
                     select.appendChild(opt);
                 });
@@ -51,12 +51,12 @@
             const locationId = this.value;
             departementSelect.innerHTML = '<option value="">Sélectionner un département</option>';
             if (!locationId) return;
-            fetch('/api/departements?locationId=' + locationId)
+            fetch('/api/departements/byLocation/' + locationId)
                 .then(res => res.json())
                 .then(deps => {
                     deps.forEach(dep => {
                         const opt = document.createElement('option');
-                        opt.value = dep.nom;
+                        opt.value = dep.id || dep._id;
                         opt.textContent = dep.nom;
                         departementSelect.appendChild(opt);
                     });

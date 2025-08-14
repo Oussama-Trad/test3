@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des employés</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="admin-layout">
+    <div th:replace="~{fragments/navbar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="container">
+            <h2>Liste des employés</h2>
+            <a th:href="@{/employees/create}" class="btn">Ajouter un employé</a>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Photo</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Location</th>
+                        <th>Département</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="employee : ${employees}">
+                        <td><img th:src="${employee.photoDeProfil}" alt="Profil" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"></td>
+                        <td th:text="${employee.nom}"></td>
+                        <td th:text="${employee.prenom}"></td>
+                        <td th:text="${locationMap[employee.location] != null ? locationMap[employee.location] : employee.location}"></td>
+                        <td th:text="${departementMap[employee.departement] != null ? departementMap[employee.departement] : employee.departement}"></td>
+                        <td>
+                            <a th:href="@{'/employees/' + ${employee._id}}" class="btn-small">Détail</a>
+                            <a th:href="@{'/employees/' + ${employee._id} + '/edit'}" class="btn-small">Modifier</a>
+                            <form th:action="@{'/employees/' + ${employee._id} + '/delete'}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-small btn-danger" onclick="return confirm('Supprimer cet employé ?')">Supprimer</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -6,21 +6,32 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="container">
-    <h2>Mon Profil</h2>
-    <form th:action="@{/profile}" method="post">
-        <input type="text" name="nom" th:value="${user.nom}" placeholder="Nom" required>
-        <input type="text" name="prenom" th:value="${user.prenom}" placeholder="Prénom" required>
-        <input type="text" name="adresse" th:value="${user.adresse}" placeholder="Adresse" required>
-        <input type="text" name="numTel" th:value="${user.numTel}" placeholder="Téléphone" required>
-        <input type="text" name="location" th:value="${user.location}" placeholder="Location" required th:if="${user.location != null}">
-        <input type="text" name="departement" th:value="${user.departement}" placeholder="Département" required th:if="${user.departement != null}">
-        <input type="email" name="email" th:value="${user.email}" placeholder="Email" required>
-        <button type="submit">Enregistrer les modifications</button>
-    </form>
-    <form th:action="@{/logout}" method="post">
-        <button type="submit" class="logout">Déconnexion</button>
-    </form>
+<div class="admin-layout">
+    <div th:replace="~{fragments/navbar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="container">
+            <h2>Mon Profil</h2>
+            <div th:if="${user != null}">
+                <form th:action="@{/profile}" method="post">
+                    <input type="text" name="nom" th:value="${user.nom ?: ''}" placeholder="Nom" required>
+                    <input type="text" name="prenom" th:value="${user.prenom ?: ''}" placeholder="Prénom" required>
+                    <input type="text" name="adresse" th:value="${user.adresse ?: ''}" placeholder="Adresse" required>
+                    <input type="text" name="numTel" th:value="${user.numTel ?: ''}" placeholder="Téléphone" required>
+                    <input type="text" name="location" th:value="${user.location ?: ''}" placeholder="Location" required th:if="${user.location != null}">
+                    <input type="text" name="departement" th:value="${user.departement ?: ''}" placeholder="Département" required th:if="${user.departement != null}">
+                    <input type="email" name="email" th:value="${user.email ?: ''}" placeholder="Email" required>
+                    <button type="submit">Enregistrer les modifications</button>
+                </form>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="logout">Déconnexion</button>
+                </form>
+            </div>
+            <div th:if="${user == null}">
+                <div style="color: #c00; font-weight: bold; margin: 32px 0;">Erreur : utilisateur non trouvé ou session expirée.<br>Veuillez vous reconnecter.</div>
+                <a th:href="@{/login}" class="nav-link">Retour à la connexion</a>
+            </div>
+        </div>
+    </main>
 </div>
 </body>
 </html>

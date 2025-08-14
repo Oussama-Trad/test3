@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Erreur</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container" style="margin-top: 60px; text-align: center;">
+        <h1 style="color: #c00;">Erreur interne du serveur (500)</h1>
+        <p>Une erreur inattendue est survenue.<br>Veuillez réessayer ou contacter l'administrateur.</p>
+        <a th:href="@{/login}" class="nav-link">Retour à la connexion</a>
+    </div>
+</body>
+</html>

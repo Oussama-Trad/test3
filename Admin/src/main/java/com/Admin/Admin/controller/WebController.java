@@ -1,3 +1,4 @@
+
 package com.Admin.Admin.controller;
 
 import com.Admin.Admin.model.Admin;
@@ -20,6 +21,16 @@ public class WebController {
     @Autowired
     private SuperAdminRepository superAdminRepository;
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @GetMapping("/")
+    public String rootRedirect(HttpSession session) {
+        Object user = session.getAttribute("user");
+        if (user != null) {
+            return "redirect:/profile";
+        } else {
+            return "redirect:/login";
+        }
+    }
 
     @GetMapping("/register")
     public String showRegister() { return "register"; }
@@ -63,7 +74,12 @@ public class WebController {
     @GetMapping("/profile")
     public String showProfile(HttpSession session, Model model) {
         Object user = session.getAttribute("user");
-        if (user == null) return "redirect:/login";
+        System.out.println("[DEBUG] user en session: " + user);
+        if (user != null) {
+            System.out.println("[DEBUG] user class: " + user.getClass().getName());
+        } else {
+            System.out.println("[DEBUG] Aucun user en session");
+        }
         model.addAttribute("user", user);
         return "profile";
     }

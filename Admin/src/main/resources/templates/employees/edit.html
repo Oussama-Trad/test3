@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier employé</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="admin-layout">
+    <div th:replace="~{fragments/navbar :: sidebar}"></div>
+    <main class="main-content">
+        <div class="container">
+            <h2>Modifier l'employé</h2>
+            <form th:action="@{'/employees/' + ${employee._id} + '/edit'}" th:object="${employee}" method="post">
+                <input type="text" th:field="*{nom}" placeholder="Nom" required>
+                <input type="text" th:field="*{prenom}" placeholder="Prénom" required>
+                <input type="text" th:field="*{id}" placeholder="ID employé" required>
+                <input type="text" th:field="*{adresse1}" placeholder="Adresse 1">
+                <input type="text" th:field="*{adresse2}" placeholder="Adresse 2">
+                <input type="text" th:field="*{numTel}" placeholder="Téléphone" required>
+                <input type="text" th:field="*{numTelParentale}" placeholder="Téléphone parentale">
+                <input type="text" th:field="*{location}" placeholder="Location" required>
+                <input type="text" th:field="*{departement}" placeholder="Département" required>
+                <input type="text" th:field="*{photoDeProfil}" placeholder="URL photo de profil">
+                <button type="submit" class="btn">Enregistrer</button>
+                <a th:href="@{'/employees/' + ${employee._id}}" class="btn">Annuler</a>
+            </form>
+        </div>
+    </main>
+</div>
+</body>
+</html>
