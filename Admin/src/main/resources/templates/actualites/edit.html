@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier actualité</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Modifier actualité</h2>
+    <form th:action="@{'/actualites/edit/' + ${actualite.id}}" th:object="${actualite}" method="post" enctype="multipart/form-data">
+        <label>Titre :</label>
+        <input type="text" th:field="*{titre}" required><br>
+        <label>Description :</label>
+        <textarea th:field="*{description}" required></textarea><br>
+        <label>Photo :</label>
+        <input type="file" name="photoFile"><br>
+        <div th:if="${actualite.photo != null}">
+            <img th:src="@{'/uploads/' + ${actualite.photo}}" alt="photo" style="max-width:80px;max-height:80px;">
+        </div>
+        <div th:if="${role} == 'superadmin'">
+            <label>Localisation :</label>
+            <select th:field="*{locationId}">
+                <option value="">Choisir</option>
+                <option th:each="loc : ${locations}" th:value="${loc.id}" th:text="${loc.nom}" th:selected="${loc.id == actualite.locationId}"></option>
+            </select><br>
+            <label>Département :</label>
+            <select th:field="*{departementId}">
+                <option value="">Choisir</option>
+                <option th:each="dep : ${departements}" th:value="${dep.id}" th:text="${dep.nom}" th:selected="${dep.id == actualite.departementId}"></option>
+            </select><br>
+        </div>
+        <button type="submit">Enregistrer</button>
+        <a th:href="@{/actualites}">Annuler</a>
+    </form>
+</div>
+</body>
+</html>

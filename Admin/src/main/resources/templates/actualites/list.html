@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Actualités</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Actualités</h2>
+    <div th:if="${role} == 'superadmin'">
+        <form method="get" th:action="@{/actualites}">
+            <label>Filtrer par localisation :</label>
+            <select name="locationId">
+                <option value="">Toutes</option>
+                <option th:each="loc : ${locations}" th:value="${loc.id}" th:text="${loc.nom}" th:selected="${param.locationId == loc.id}"></option>
+            </select>
+            <label>Département :</label>
+            <select name="departementId">
+                <option value="">Tous</option>
+                <option th:each="dep : ${departements}" th:value="${dep.id}" th:text="${dep.nom}" th:selected="${param.departementId == dep.id}"></option>
+            </select>
+            <button type="submit">Filtrer</button>
+        </form>
+    </div>
+    <a th:href="@{/actualites/create}" class="btn">Nouvelle actualité</a>
+    <table>
+        <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Description</th>
+            <th>Photo</th>
+            <th>Localisation</th>
+            <th>Département</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="actu : ${actualites}">
+            <td th:text="${actu.titre}"></td>
+            <td th:text="${actu.description}"></td>
+            <td><img th:src="@{'/uploads/' + ${actu.photo}}" alt="photo" style="max-width:80px;max-height:80px;" th:if="${actu.photo != null}"></td>
+            <td>
+                <span th:each="loc : ${locations}" th:if="${loc.id} == ${actu.locationId}" th:text="${loc.nom}"></span>
+            </td>
+            <td>
+                <span th:each="dep : ${departements}" th:if="${dep.id} == ${actu.departementId}" th:text="${dep.nom}"></span>
+            </td>
+            <td>
+                <a th:href="@{'/actualites/edit/' + ${actu.id}}">Modifier</a>
+                <form th:action="@{'/actualites/delete/' + ${actu.id}}" method="post" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Supprimer cette actualité ?')">Supprimer</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -31,9 +31,9 @@
                         <td th:text="${locationMap[employee.location] != null ? locationMap[employee.location] : employee.location}"></td>
                         <td th:text="${departementMap[employee.departement] != null ? departementMap[employee.departement] : employee.departement}"></td>
                         <td>
-                            <a th:href="@{'/employees/' + ${employee._id}}" class="btn-small">Détail</a>
-                            <a th:href="@{'/employees/' + ${employee._id} + '/edit'}" class="btn-small">Modifier</a>
-                            <form th:action="@{'/employees/' + ${employee._id} + '/delete'}" method="post" style="display:inline;">
+                            <a th:href="@{'/employees/' + ${employee.id}}" class="btn-small">Détail</a>
+                            <a th:href="@{'/employees/' + ${employee.id} + '/edit'}" class="btn-small">Modifier</a>
+                            <form th:action="@{'/employees/' + ${employee.id} + '/delete'}" method="post" style="display:inline;">
                                 <button type="submit" class="btn-small btn-danger" onclick="return confirm('Supprimer cet employé ?')">Supprimer</button>
                             </form>
                         </td>
