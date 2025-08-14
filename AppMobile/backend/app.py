@@ -1,0 +1,203 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from pymongo import MongoClient
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
+import jwt
+import os
+from functools import wraps
+
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Configuration
+app.config['SECRET_KEY'] = '123'  # JWT_SECRET_KEY
+MONGODB_URI = 'mongodb+srv://oussamatrzd19:oussama123@leoniapp.grhnzgz.mongodb.net/'
+client = MongoClient(MONGODB_URI)
+db = client['DBLEONI']
+
+# Collections
+employee_collection = db['employee']
+location_collection = db['location']
+departement_collection = db['departement']
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+        
+        try:
+            token = token.split(" ")[1]  # Remove 'Bearer ' prefix
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user = employee_collection.find_one({'adresse1': data['adresse1']})
+            
+            if not current_user:
+                return jsonify({'message': 'Token is invalid!'}), 401
+                
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired!'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Token is invalid!'}), 401
+        
+        return f(current_user, *args, **kwargs)
+    
+    return decorated
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    try:
+        data = request.get_json()
+        
+        # Validation
+        required_fields = ['nom', 'prenom', 'id', 'adresse1', 'numTel', 'location', 'departement', 'password']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'message': f'{field} is required'}), 400
+        
+        # Check if employee already exists
+        if employee_collection.find_one({'id': data['id']}):
+            return jsonify({'message': 'Employee with this ID already exists'}), 400
+        
+        if employee_collection.find_one({'numTel': data['numTel']}):
+            return jsonify({'message': 'Employee with this phone number already exists'}), 400
+        
+        # Hash password
+        hashed_password = generate_password_hash(data['password'])
+        
+        # Create employee document
+        employee = {
+            'nom': data['nom'],
+            'prenom': data['prenom'],
+            'id': data['id'],
+            'adresse1': data['adresse1'],
+            'adresse2': data.get('adresse2', ''),
+            'numTel': data['numTel'],
+            'numTelParentale': data.get('numTelParentale', ''),
+            'location': data['location'],
+            'departement': data['departement'],
+            'photoDeProfil': data.get('photoDeProfil', ''),
+            'password': hashed_password,
+            'createdAt': datetime.utcnow(),
+            'updatedAt': datetime.utcnow()
+        }
+        
+        result = employee_collection.insert_one(employee)
+        
+        # Generate JWT token
+        token = jwt.encode({
+            'adresse1': data['adresse1'],
+            'exp': datetime.utcnow() + timedelta(days=7)
+        }, app.config['SECRET_KEY'], algorithm='HS256')
+        
+        return jsonify({
+            'message': 'Employee registered successfully',
+            'token': token,
+            'employee': {
+                'id': data['id'],
+                'nom': data['nom'],
+                'prenom': data['prenom'],
+                'email': data.get('email', ''),
+                'location': data['location'],
+                'departement': data['departement']
+            }
+        }), 201
+        
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        
+        if not data.get('adresse1') or not data.get('password'):
+            return jsonify({'message': 'adresse1 and password are required'}), 400
+        
+        # Find employee by ID
+        employee = employee_collection.find_one({'adresse1': data['adresse1']})
+        
+        if not employee:
+            return jsonify({'message': 'Invalid credentials'}), 401
+        
+        # Check password
+        if not check_password_hash(employee['password'], data['password']):
+            return jsonify({'message': 'Invalid credentials'}), 401
+        
+        # Generate JWT token
+        token = jwt.encode({
+            'adresse1': employee['adresse1'],
+            'exp': datetime.utcnow() + timedelta(days=7)
+        }, app.config['SECRET_KEY'], algorithm='HS256')
+        
+        return jsonify({
+            'message': 'Login successful',
+            'token': token,
+            'employee': {
+                'id': employee['id'],
+                'nom': employee['nom'],
+                'prenom': employee['prenom'],
+                'location': employee['location'],
+                'departement': employee['departement'],
+                'photoDeProfil': employee.get('photoDeProfil', '')
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+@app.route('/api/locations', methods=['GET'])
+def get_locations():
+    try:
+        locations = list(location_collection.find({}, {'_id': 0, 'nom': 1}))
+        return jsonify({'locations': [loc['nom'] for loc in locations]}), 200
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+@app.route('/api/departments/<location>', methods=['GET'])
+def get_departments(location):
+    try:
+        # Find location ID
+        location_doc = location_collection.find_one({'nom': location})
+        if not location_doc:
+            return jsonify({'message': 'Location not found'}), 404
+        
+        # Find departments for this location
+        departments = list(departement_collection.find(
+            {'locationId': location_doc['_id']}, 
+            {'_id': 0, 'nom': 1}
+        ))
+        
+        return jsonify({'departments': [dept['nom'] for dept in departments]}), 200
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+@app.route('/api/profile', methods=['GET'])
+@token_required
+def get_profile(current_user):
+    try:
+        employee_data = {
+            'id': current_user['id'],
+            'nom': current_user['nom'],
+            'prenom': current_user['prenom'],
+            'adresse1': current_user['adresse1'],
+            'adresse2': current_user.get('adresse2', ''),
+            'numTel': current_user['numTel'],
+            'numTelParentale': current_user.get('numTelParentale', ''),
+            'location': current_user['location'],
+            'departement': current_user['departement'],
+            'photoDeProfil': current_user.get('photoDeProfil', '')
+        }
+        
+        return jsonify({'employee': employee_data}), 200
+        
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({'message': 'Mobile app backend is running'}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
+
