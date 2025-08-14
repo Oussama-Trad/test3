@@ -1,0 +1,41 @@
+<!-- Fragment: Dropdowns dynamiques pour Location et Département -->
+<div id="location-departement-fields">
+    <select id="locationSelect" name="location" required>
+        <option value="">Sélectionner une location</option>
+    </select>
+    <select id="departementSelect" name="departement" required>
+        <option value="">Sélectionner un département</option>
+    </select>
+</div>
+<script>
+// Récupère la liste des locations
+fetch('/api/locations')
+  .then(res => res.json())
+  .then(locations => {
+    const select = document.getElementById('locationSelect');
+    locations.forEach(loc => {
+      const opt = document.createElement('option');
+      opt.value = loc.id || loc; // supporte id ou nom
+      opt.textContent = loc.nom || loc;
+      select.appendChild(opt);
+    });
+  });
+// Met à jour les départements selon la location
+const locationSelect = document.getElementById('locationSelect');
+const departementSelect = document.getElementById('departementSelect');
+locationSelect.addEventListener('change', function() {
+  const locationId = this.value;
+  departementSelect.innerHTML = '<option value="">Sélectionner un département</option>';
+  if (!locationId) return;
+  fetch('/api/departements?locationId=' + locationId)
+    .then(res => res.json())
+    .then(deps => {
+      deps.forEach(dep => {
+        const opt = document.createElement('option');
+        opt.value = dep.nom;
+        opt.textContent = dep.nom;
+        departementSelect.appendChild(opt);
+      });
+    });
+});
+</script>

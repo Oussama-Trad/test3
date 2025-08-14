@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Inscription Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Créer un compte Admin / Super Admin</h2>
+    <form th:action="@{/register}" method="post">
+        <input type="text" name="nom" placeholder="Nom" required>
+        <input type="text" name="prenom" placeholder="Prénom" required>
+        <input type="text" name="adresse" placeholder="Adresse" required>
+        <input type="text" name="numTel" placeholder="Téléphone" required>
+        <!-- Dropdowns dynamiques pour location et département -->
+        <div id="location-departement-fields">
+            <select id="locationSelect" name="location" required>
+                <option value="">Sélectionner une location</option>
+            </select>
+            <select id="departementSelect" name="departement" required>
+                <option value="">Sélectionner un département</option>
+            </select>
+        </div>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Mot de passe" required>
+        <select name="role" id="roleSelect">
+            <option value="admin">Admin</option>
+            <option value="superadmin">Super Admin</option>
+        </select>
+        <button type="submit">S'inscrire</button>
+    </form>
+    <p>Déjà un compte ? <a th:href="@{/login}">Se connecter</a></p>
+        <script>
+        // Remplit la liste des locations
+        fetch('/api/locations')
+            .then(res => res.json())
+            .then(locations => {
+                const select = document.getElementById('locationSelect');
+                locations.forEach(loc => {
+                    const opt = document.createElement('option');
+                    opt.value = loc.id || loc;
+                    opt.textContent = loc.nom || loc;
+                    select.appendChild(opt);
+                });
+            });
+        // Met à jour les départements selon la location
+        const locationSelect = document.getElementById('locationSelect');
+        const departementSelect = document.getElementById('departementSelect');
+        locationSelect.addEventListener('change', function() {
+            const locationId = this.value;
+            departementSelect.innerHTML = '<option value="">Sélectionner un département</option>';
+            if (!locationId) return;
+            fetch('/api/departements?locationId=' + locationId)
+                .then(res => res.json())
+                .then(deps => {
+                    deps.forEach(dep => {
+                        const opt = document.createElement('option');
+                        opt.value = dep.nom;
+                        opt.textContent = dep.nom;
+                        departementSelect.appendChild(opt);
+                    });
+                });
+        });
+        // Si Super Admin, désactive les dropdowns et met "all"
+        document.getElementById('roleSelect').addEventListener('change', function() {
+            if (this.value === 'superadmin') {
+                locationSelect.innerHTML = '<option value="all">all</option>';
+                departementSelect.innerHTML = '<option value="all">all</option>';
+                locationSelect.disabled = true;
+                departementSelect.disabled = true;
+            } else {
+                locationSelect.disabled = false;
+                departementSelect.disabled = false;
+                // Recharge les locations si besoin
+                locationSelect.innerHTML = '<option value="">Sélectionner une location</option>';
+                fetch('/api/locations')
+                    .then(res => res.json())
+                    .then(locations => {
+                        locations.forEach(loc => {
+                            const opt = document.createElement('option');
+                            opt.value = loc.id || loc;
+                            opt.textContent = loc.nom || loc;
+                            locationSelect.appendChild(opt);
+                        });
+                    });
+                departementSelect.innerHTML = '<option value="">Sélectionner un département</option>';
+            }
+        });
+        </script>
+</div>
+</body>
+</html>

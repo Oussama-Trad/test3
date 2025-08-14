@@ -20,9 +20,6 @@ public class LocationController {
     @GetMapping
     public ResponseEntity<?> getAllLocations() {
         List<Location> locations = locationRepository.findAll();
-        List<String> locationNames = locations.stream()
-                .map(Location::getNom)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok().body(locationNames);
+        return ResponseEntity.ok().body(locations);
     }
 }
