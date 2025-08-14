@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import InputField from '../../components/InputField';
 import CustomButton from '../../components/CustomButton';
 import { register, getLocations, getDepartments } from '../../services/api/employeeApi';
 import { Picker } from '@react-native-picker/picker';
 
+import { UserContext } from '../../context/UserContext';
+
 const RegisterScreen = ({ navigation }) => {
+  const { setUser } = useContext(UserContext);
   const [form, setForm] = useState({
     id: '', nom: '', prenom: '', password: '', adresse1: '', adresse2: '', numTel: '', numTelParentale: '', location: '', departement: '', photoDeProfil: ''
   });
@@ -28,7 +31,11 @@ const RegisterScreen = ({ navigation }) => {
 
   const handleRegister = async () => {
     const res = await register(form);
-    if (res && res.message === 'Employee registered successfully') {
+    if (res && res.message === 'Employee registered successfully' && res.token && res.user) {
+      setUser(res.user);
+      Alert.alert('Succès', 'Inscription réussie !');
+      navigation.replace('MainTabs');
+    } else if (res && res.message === 'Employee registered successfully') {
       Alert.alert('Succès', 'Inscription réussie !');
       navigation.replace('Login');
     } else {

@@ -172,27 +172,41 @@ def get_departments(location):
     except Exception as e:
         return jsonify({'message': str(e)}), 500
 
-@app.route('/api/profile', methods=['GET'])
+@app.route('/api/profile', methods=['GET', 'PUT'])
 @token_required
-def get_profile(current_user):
-    try:
-        employee_data = {
-            'id': current_user['id'],
-            'nom': current_user['nom'],
-            'prenom': current_user['prenom'],
-            'adresse1': current_user['adresse1'],
-            'adresse2': current_user.get('adresse2', ''),
-            'numTel': current_user['numTel'],
-            'numTelParentale': current_user.get('numTelParentale', ''),
-            'location': current_user['location'],
-            'departement': current_user['departement'],
-            'photoDeProfil': current_user.get('photoDeProfil', '')
-        }
-        
-        return jsonify({'employee': employee_data}), 200
-        
-    except Exception as e:
-        return jsonify({'message': str(e)}), 500
+def profile(current_user):
+    if request.method == 'GET':
+        try:
+            employee_data = {
+                'id': current_user['id'],
+                'nom': current_user['nom'],
+                'prenom': current_user['prenom'],
+                'adresse1': current_user['adresse1'],
+                'adresse2': current_user.get('adresse2', ''),
+                'numTel': current_user['numTel'],
+                'numTelParentale': current_user.get('numTelParentale', ''),
+                'location': current_user['location'],
+                'departement': current_user['departement'],
+                'photoDeProfil': current_user.get('photoDeProfil', '')
+            }
+            return jsonify({'employee': employee_data}), 200
+        except Exception as e:
+            return jsonify({'message': str(e)}), 500
+    elif request.method == 'PUT':
+        try:
+            data = request.get_json()
+            update_fields = {}
+            for field in ['nom', 'prenom', 'adresse1', 'adresse2', 'numTel', 'numTelParentale', 'location', 'departement', 'photoDeProfil']:
+                if field in data:
+                    update_fields[field] = data[field]
+            # Mot de passe (optionnel)
+            if 'password' in data and data['password']:
+                update_fields['password'] = generate_password_hash(data['password'])
+            update_fields['updatedAt'] = datetime.utcnow()
+            employee_collection.update_one({'id': current_user['id']}, {'$set': update_fields})
+            return jsonify({'success': True, 'message': 'Profil mis à jour'}), 200
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

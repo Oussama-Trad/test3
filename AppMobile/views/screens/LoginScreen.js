@@ -1,18 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import InputField from '../../components/InputField';
 import CustomButton from '../../components/CustomButton';
 import { login } from '../../services/api/employeeApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { UserContext } from '../../context/UserContext';
+
 const LoginScreen = ({ navigation }) => {
   const [adresse1, setAdresse1] = useState('');
   const [password, setPassword] = useState('');
+  const { setUser } = useContext(UserContext);
 
   const handleLogin = async () => {
-    const res = await login(adresse1, password); // login modifié pour utiliser adresse1
+    const res = await login(adresse1, password);
     if (res.token) {
       await AsyncStorage.setItem('token', res.token);
-      navigation.replace('Profile');
+      setUser(res.employee); // stocke l'utilisateur dans le contexte
+      navigation.replace('MainTabs');
     } else {
       Alert.alert('Erreur', res.message || 'Adresse ou mot de passe invalide');
     }

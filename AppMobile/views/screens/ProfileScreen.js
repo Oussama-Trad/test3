@@ -27,10 +27,22 @@ const ProfileScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Image source={{ uri: profile.photoDeProfil || undefined }} style={styles.avatar} />
+        <Image source={profile.photoDeProfil ? { uri: profile.photoDeProfil } : require('../../assets/icon.png')} style={styles.avatar} />
         <Text style={styles.name}>{profile.nom} {profile.prenom}</Text>
-        <Text style={styles.info}>{profile.location} - {profile.departement}</Text>
-        <Text style={styles.info}>{profile.numTel}</Text>
+        <Text style={styles.infoLabel}>ID:</Text>
+        <Text style={styles.infoValue}>{profile.id}</Text>
+        <Text style={styles.infoLabel}>Adresse 1:</Text>
+        <Text style={styles.infoValue}>{profile.adresse1}</Text>
+        <Text style={styles.infoLabel}>Adresse 2:</Text>
+        <Text style={styles.infoValue}>{profile.adresse2}</Text>
+        <Text style={styles.infoLabel}>Téléphone:</Text>
+        <Text style={styles.infoValue}>{profile.numTel}</Text>
+        <Text style={styles.infoLabel}>Téléphone Parentale:</Text>
+        <Text style={styles.infoValue}>{profile.numTelParentale}</Text>
+        <Text style={styles.infoLabel}>Location:</Text>
+        <Text style={styles.infoValue}>{profile.location}</Text>
+        <Text style={styles.infoLabel}>Département:</Text>
+        <Text style={styles.infoValue}>{profile.departement}</Text>
         <View style={styles.row}>
           <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('EditProfile', { profile })}>
             <Text style={styles.buttonText}>Modifier</Text>
@@ -76,10 +88,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  info: {
+  infoLabel: {
     color: '#1D2D51',
-    fontSize: 18,
-    marginBottom: 8,
+    fontWeight: 'bold',
+    fontSize: 16,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+  },
+  infoValue: {
+    color: '#1D2D51',
+    fontSize: 16,
+    alignSelf: 'flex-start',
+    marginBottom: 2,
   },
   row: {
     flexDirection: 'row',
