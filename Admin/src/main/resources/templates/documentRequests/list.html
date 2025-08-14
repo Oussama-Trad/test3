@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Demandes de documents</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Demandes de documents</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>Employé</th>
+            <th>Type de document</th>
+            <th>Département</th>
+            <th>Localisation</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Commentaire</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="req : ${requests}">
+            <td th:text="${req.employeeId}"></td>
+            <td th:text="${req.documentTypeId}"></td>
+            <td th:text="${req.departmentId}"></td>
+            <td th:text="${req.locationId}"></td>
+            <td th:text="${#dates.format(req.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${req.status}"></td>
+            <td th:text="${req.commentaire}"></td>
+            <td>
+                <form th:action="@{'/document-requests/update-status/' + ${req.id}}" method="post" style="display:inline;">
+                    <select name="status">
+                        <option th:selected="${req.status == 'En attente'}">En attente</option>
+                        <option th:selected="${req.status == 'En cours'}">En cours</option>
+                        <option th:selected="${req.status == 'Accepté'}">Accepté</option>
+                        <option th:selected="${req.status == 'Refusé'}">Refusé</option>
+                    </select>
+                    <button type="submit">Changer</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <a href="/">Retour accueil</a>
+</div>
+</body>
+</html>
