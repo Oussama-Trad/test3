@@ -5,5 +5,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.List;
 
 public interface EmployeeRepository extends MongoRepository<Employee, String> {
-    List<Employee> findByLocationAndDepartement(String location, String departement);
+    List<Employee> findByLocationIdAndDepartementId(String locationId, String departementId);
 }

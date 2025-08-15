@@ -37,22 +37,20 @@ public class WebController {
 
     @PostMapping("/register")
     public String register(@RequestParam String nom, @RequestParam String prenom, @RequestParam String adresse,
-                          @RequestParam String numTel, @RequestParam(required = false) String location, @RequestParam(required = false) String departement,
+                          @RequestParam String numTel, @RequestParam(required = false) String locationId, @RequestParam(required = false) String departementId,
                           @RequestParam String email, @RequestParam String password, @RequestParam String role, Model model) {
         if (role.equals("superadmin")) {
-            // Si location ou departement sont null, on les force à ""
-            if (location == null) location = "";
-            if (departement == null) departement = "";
+            if (locationId == null) locationId = "";
+            if (departementId == null) departementId = "";
             SuperAdmin superAdmin = new SuperAdmin(nom, prenom, adresse, numTel, email, passwordEncoder.encode(password));
-            superAdmin.setLocation(location);
-            superAdmin.setDepartement(departement);
+            superAdmin.setLocation(locationId);
+            superAdmin.setDepartement(departementId);
             superAdmin.setRole("superadmin");
             superAdminRepository.save(superAdmin);
         } else {
-            // Si location ou departement sont null, on les force à ""
-            if (location == null) location = "";
-            if (departement == null) departement = "";
-            Admin admin = new Admin(nom, prenom, adresse, numTel, location, departement, email, passwordEncoder.encode(password));
+            if (locationId == null) locationId = "";
+            if (departementId == null) departementId = "";
+            Admin admin = new Admin(nom, prenom, adresse, numTel, locationId, departementId, email, passwordEncoder.encode(password));
             adminRepository.save(admin);
         }
         model.addAttribute("success", true);
@@ -95,8 +93,8 @@ public class WebController {
 
     @PostMapping("/profile")
     public String updateProfile(@RequestParam String nom, @RequestParam String prenom, @RequestParam String adresse,
-                               @RequestParam String numTel, @RequestParam(required = false) String location,
-                               @RequestParam(required = false) String departement, @RequestParam String email,
+                               @RequestParam String numTel, @RequestParam(required = false) String locationId,
+                               @RequestParam(required = false) String departementId, @RequestParam String email,
                                HttpSession session, Model model) {
         String role = (String) session.getAttribute("role");
         if (role == null) return "redirect:/login";
@@ -108,7 +106,7 @@ public class WebController {
         } else {
             Admin user = (Admin) session.getAttribute("user");
             user.setNom(nom); user.setPrenom(prenom); user.setAdresse(adresse); user.setNumTel(numTel);
-            user.setLocation(location); user.setDepartement(departement); user.setEmail(email);
+            user.setLocation(locationId); user.setDepartement(departementId); user.setEmail(email);
             adminRepository.save(user);
             session.setAttribute("user", user);
         }

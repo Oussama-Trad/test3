@@ -19,8 +19,14 @@
                 <input type="text" th:field="*{adresse2}" placeholder="Adresse 2">
                 <input type="text" th:field="*{numTel}" placeholder="Téléphone" required>
                 <input type="text" th:field="*{numTelParentale}" placeholder="Téléphone parentale">
-                <input type="text" th:field="*{location}" placeholder="Location" required>
-                <input type="text" th:field="*{departement}" placeholder="Département" required>
+                <select th:field="*{locationId}" required>
+                    <option value="">Sélectionner une location</option>
+                    <option th:each="loc : ${locationMap}" th:value="${loc.key}" th:text="${loc.value}" th:selected="${loc.key == employee.locationId}"></option>
+                </select>
+                <select th:field="*{departementId}" required>
+                    <option value="">Sélectionner un département</option>
+                    <option th:each="dep : ${departementMap}" th:value="${dep.key}" th:text="${dep.value}" th:selected="${dep.key == employee.departementId}"></option>
+                </select>
                 <input type="text" th:field="*{photoDeProfil}" placeholder="URL photo de profil">
                 <button type="submit" class="btn">Enregistrer</button>
                 <a th:href="@{'/employees/' + ${employee._id}}" class="btn">Annuler</a>

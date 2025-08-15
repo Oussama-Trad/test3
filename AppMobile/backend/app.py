@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from events_api import bp_events
 from datetime import datetime, timedelta
 import jwt
 import os
@@ -8,7 +9,7 @@ from functools import wraps
 from auth_utils import token_required
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # Configuration
 app.config['SECRET_KEY'] = '123'  # JWT_SECRET_KEY
@@ -22,31 +23,18 @@ from documents import bp as documents_bp
 app.register_blueprint(documents_bp)
 from actualites import bp as actualites_bp
 app.register_blueprint(actualites_bp)
+app.register_blueprint(bp_events)
 
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = request.headers.get('Authorization')
-        
-        if not token:
-            return jsonify({'message': 'Token is missing!'}), 401
-        
-        try:
-            token = token.split(" ")[1]  # Remove 'Bearer ' prefix
-            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            current_user = employee_collection.find_one({'adresse1': data['adresse1']})
-            
-            if not current_user:
-                return jsonify({'message': 'Token is invalid!'}), 401
-                
-        except jwt.ExpiredSignatureError:
-            return jsonify({'message': 'Token has expired!'}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({'message': 'Token is invalid!'}), 401
-        
-        return f(current_user, *args, **kwargs)
-    
-    return decorated
+
+@app.route('/api/locations-full', methods=['GET'])
+def get_locations_full():
+    locations = list(location_collection.find({}, {'_id': 1, 'nom': 1}))
+    return jsonify([{'id': str(loc['_id']), 'nom': loc['nom']} for loc in locations])
+
+@app.route('/api/departments-full', methods=['GET'])
+def get_departments_full():
+    departements = list(departement_collection.find({}, {'_id': 1, 'nom': 1}))
+    return jsonify([{'id': str(dep['_id']), 'nom': dep['nom']} for dep in departements])
 
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -74,7 +62,7 @@ def register():
         departement_doc = departement_collection.find_one({'nom': data['departement']})
         location_id = str(location_doc['_id']) if location_doc else data['location']
         departement_id = str(departement_doc['_id']) if departement_doc else data['departement']
-        # Create employee document
+        # Create employee document avec locationId et departementId
         employee = {
             'nom': data['nom'],
             'prenom': data['prenom'],
@@ -83,8 +71,8 @@ def register():
             'adresse2': data.get('adresse2', ''),
             'numTel': data['numTel'],
             'numTelParentale': data.get('numTelParentale', ''),
-            'location': location_id,
-            'departement': departement_id,
+            'locationId': location_id,
+            'departementId': departement_id,
             'photoDeProfil': data.get('photoDeProfil', ''),
             'password': hashed_password,
             'createdAt': datetime.utcnow(),
@@ -104,8 +92,8 @@ def register():
                 'nom': data['nom'],
                 'prenom': data['prenom'],
                 'email': data.get('email', ''),
-                'location': data['location'],
-                'departement': data['departement']
+                'locationId': location_id,
+                'departementId': departement_id
             }
         }), 201
     except Exception as e:
@@ -143,8 +131,8 @@ def login():
                 'id': employee['id'],
                 'nom': employee['nom'],
                 'prenom': employee['prenom'],
-                'location': employee['location'],
-                'departement': employee['departement'],
+                'locationId': employee.get('locationId', employee.get('location', '')),
+                'departementId': employee.get('departementId', employee.get('departement', '')),
                 'photoDeProfil': employee.get('photoDeProfil', '')
             }
         }), 200
@@ -189,8 +177,8 @@ def profile(current_user):
                 'adresse2': current_user.get('adresse2', ''),
                 'numTel': current_user['numTel'],
                 'numTelParentale': current_user.get('numTelParentale', ''),
-                'location': current_user['location'],
-                'departement': current_user['departement'],
+                'locationId': current_user.get('locationId', current_user.get('location', '')),
+                'departementId': current_user.get('departementId', current_user.get('departement', '')),
                 'photoDeProfil': current_user.get('photoDeProfil', '')
             }
             return jsonify({'employee': employee_data}), 200
@@ -200,7 +188,7 @@ def profile(current_user):
         try:
             data = request.get_json()
             update_fields = {}
-            for field in ['nom', 'prenom', 'adresse1', 'adresse2', 'numTel', 'numTelParentale', 'location', 'departement', 'photoDeProfil']:
+            for field in ['nom', 'prenom', 'adresse1', 'adresse2', 'numTel', 'numTelParentale', 'locationId', 'departementId', 'photoDeProfil']:
                 if field in data:
                     update_fields[field] = data[field]
             # Mot de passe (optionnel)

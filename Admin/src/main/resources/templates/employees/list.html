@@ -28,8 +28,8 @@
                         <td><img th:src="${employee.photoDeProfil}" alt="Profil" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"></td>
                         <td th:text="${employee.nom}"></td>
                         <td th:text="${employee.prenom}"></td>
-                        <td th:text="${locationMap[employee.location] != null ? locationMap[employee.location] : employee.location}"></td>
-                        <td th:text="${departementMap[employee.departement] != null ? departementMap[employee.departement] : employee.departement}"></td>
+                        <td th:text="${employee.locationId != null && locationMap[employee.locationId] != null ? locationMap[employee.locationId] : (employee.locationId != null ? employee.locationId : 'N/A')}"></td>
+                        <td th:text="${employee.departementId != null && departementMap[employee.departementId] != null ? departementMap[employee.departementId] : (employee.departementId != null ? employee.departementId : 'N/A')}"></td>
                         <td>
                             <a th:href="@{'/employees/' + ${employee.id}}" class="btn-small">Détail</a>
                             <a th:href="@{'/employees/' + ${employee.id} + '/edit'}" class="btn-small">Modifier</a>

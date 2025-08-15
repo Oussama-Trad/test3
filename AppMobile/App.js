@@ -6,6 +6,8 @@ import EditProfileScreen from './views/screens/EditProfileScreen';
 import LoginScreen from './views/screens/LoginScreen';
 import RegisterScreen from './views/screens/RegisterScreen';
 import { NavigationContainer } from '@react-navigation/native';
+import EventsScreen from './views/screens/EventsScreen';
+import EventDetailScreen from './views/screens/EventDetailScreen';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from './views/screens/HomeScreen';
@@ -44,6 +46,7 @@ function MainTabs() {
       <Tab.Screen name="Documents" component={DocumentScreen} />
       <Tab.Screen name="Mon Profil" component={ProfileScreen} />
       <Tab.Screen name="Messagerie" component={MessagesScreen} />
+    <Tab.Screen name="Événements" component={EventsScreen} />
     </Tab.Navigator>
   );
 }
@@ -60,6 +63,7 @@ export default function App() {
           <Stack.Screen name="MainTabs" component={MainTabs} />
           <Stack.Screen name="ActualiteDetail" component={require('./views/screens/ActualiteDetailScreen').default} options={{ headerShown: true, title: 'Détail actualité' }} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: 'Détail événement' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>

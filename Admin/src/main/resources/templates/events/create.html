@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer un événement</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Créer un événement</h2>
+    <form th:action="@{/events/create}" th:object="${event}" method="post" enctype="multipart/form-data">
+        <label>Titre :</label>
+        <input type="text" th:field="*{title}" required><br>
+        <label>Description :</label>
+        <textarea th:field="*{description}" required></textarea><br>
+        <label>Photo :</label>
+        <input type="file" name="photoFile"><br>
+        <label>Date de début :</label>
+        <input type="datetime-local" th:field="*{startDate}" required><br>
+        <label>Date de fin :</label>
+        <input type="datetime-local" th:field="*{endDate}"><br>
+        <div th:if="${role} == 'superadmin'">
+            <label>Localisation :</label>
+            <select th:field="*{locationId}">
+                <option value="">Choisir</option>
+                <option th:each="loc : ${locations}" th:value="${loc.id}" th:text="${loc.nom}"></option>
+                <option value="tout">Tous</option>
+            </select><br>
+            <label>Département :</label>
+            <select th:field="*{departementId}">
+                <option value="">Choisir</option>
+                <option th:each="dep : ${departements}" th:value="${dep.id}" th:text="${dep.nom}"></option>
+                <option value="tout">Tous</option>
+            </select><br>
+        </div>
+        <button type="submit">Créer</button>
+        <a th:href="@{/events}">Annuler</a>
+    </form>
+</div>
+</body>
+</html>

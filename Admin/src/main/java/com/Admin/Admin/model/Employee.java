@@ -14,8 +14,8 @@ public class Employee {
     private String adresse2;
     private String numTel;
     private String numTelParentale;
-    private String location;
-    private String departement;
+    private String locationId;
+    private String departementId;
     private String photoDeProfil = "";
     private Date createdAt;
     private Date updatedAt;
@@ -66,17 +66,17 @@ public class Employee {
     public void setNumTelParentale(String numTelParentale) {
         this.numTelParentale = numTelParentale;
     }
-    public String getLocation() {
-        return location;
+    public String getLocationId() {
+        return locationId;
     }
-    public void setLocation(String location) {
-        this.location = location;
+    public void setLocationId(String locationId) {
+        this.locationId = locationId;
     }
-    public String getDepartement() {
-        return departement;
+    public String getDepartementId() {
+        return departementId;
     }
-    public void setDepartement(String departement) {
-        this.departement = departement;
+    public void setDepartementId(String departementId) {
+        this.departementId = departementId;
     }
     public String getPhotoDeProfil() {
         return photoDeProfil;

@@ -21,8 +21,8 @@
                     <li><b>Adresse 2 :</b> <span th:text="${employee.adresse2}"></span></li>
                     <li><b>Téléphone :</b> <span th:text="${employee.numTel}"></span></li>
                     <li><b>Téléphone parentale :</b> <span th:text="${employee.numTelParentale}"></span></li>
-                    <li><b>Location :</b> <span th:text="${employee.location}"></span></li>
-                    <li><b>Département :</b> <span th:text="${employee.departement}"></span></li>
+                    <li><b>Location :</b> <span th:text="${locationMap[employee.locationId] != null ? locationMap[employee.locationId] : employee.locationId}"></span></li>
+                    <li><b>Département :</b> <span th:text="${departementMap[employee.departementId] != null ? departementMap[employee.departementId] : employee.departementId}"></span></li>
                     <li><b>Créé le :</b> <span th:text="${#dates.format(employee.createdAt, 'dd/MM/yyyy HH:mm')}"></span></li>
                     <li><b>Modifié le :</b> <span th:text="${#dates.format(employee.updatedAt, 'dd/MM/yyyy HH:mm')}"></span></li>
                 </ul>

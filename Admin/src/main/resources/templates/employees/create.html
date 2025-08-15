@@ -19,10 +19,11 @@
                 <input type="text" th:field="*{adresse2}" placeholder="Adresse 2">
                 <input type="text" th:field="*{numTel}" placeholder="Téléphone" required>
                 <input type="text" th:field="*{numTelParentale}" placeholder="Téléphone parentale">
-                <select id="location" name="location" th:field="*{location}" required>
+                <select id="locationId" th:field="*{locationId}" required>
                     <option value="">Sélectionner une location</option>
+                    <option th:each="loc : ${locationMap}" th:value="${loc.key}" th:text="${loc.value}"></option>
                 </select>
-                <select id="departement" name="departement" th:field="*{departement}" required>
+                <select id="departementId" th:field="*{departementId}" required>
                     <option value="">Sélectionner un département</option>
                 </select>
                 <input type="hidden" th:field="*{photoDeProfil}" value="" />
@@ -31,31 +32,22 @@
             </form>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    fetch('/api/locations')
-                        .then(res => res.json())
-                        .then(locations => {
-                            const select = document.getElementById('location');
-                            locations.forEach(loc => {
-                                const opt = document.createElement('option');
-                                opt.value = loc.id || loc._id;
-                                opt.textContent = loc.nom;
-                                select.appendChild(opt);
-                            });
-                        });
-                    document.getElementById('location').addEventListener('change', function(e) {
+                    const locationSelect = document.getElementById('locationId');
+                    const departementSelect = document.getElementById('departementId');
+                    // On vide les départements au chargement
+                    departementSelect.innerHTML = '<option value="">Sélectionner un département</option>';
+                    locationSelect.addEventListener('change', function(e) {
                         const locationId = e.target.value;
-                        console.log('Location sélectionnée, id =', locationId);
+                        departementSelect.innerHTML = '<option value="">Sélectionner un département</option>';
+                        if (!locationId) return;
                         fetch('/api/departements/byLocation/' + locationId)
                             .then(res => res.json())
                             .then(deps => {
-                                console.log('Départements reçus pour location', locationId, ':', deps);
-                                const depSelect = document.getElementById('departement');
-                                depSelect.innerHTML = '<option value="">Sélectionner un département</option>';
                                 deps.forEach(dep => {
                                     const opt = document.createElement('option');
                                     opt.value = dep.id || dep._id;
                                     opt.textContent = dep.nom;
-                                    depSelect.appendChild(opt);
+                                    departementSelect.appendChild(opt);
                                 });
                             });
                     });

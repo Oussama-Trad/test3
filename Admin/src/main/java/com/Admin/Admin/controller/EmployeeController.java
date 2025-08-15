@@ -33,19 +33,19 @@ public class EmployeeController {
         String role = (String) session.getAttribute("role");
         List<Employee> employees;
         if (user != null && "admin".equals(role)) {
-            String location = ((com.Admin.Admin.model.Admin) user).getLocation();
-            String departement = ((com.Admin.Admin.model.Admin) user).getDepartement();
+            String locationId = ((com.Admin.Admin.model.Admin) user).getLocation();
+            String departementId = ((com.Admin.Admin.model.Admin) user).getDepartement();
             employees = employeeRepository.findAll().stream()
                 .filter(emp -> (
-                    (location != null && emp.getLocation() != null &&
-                        (location.equals(emp.getLocation()) ||
-                         location.equalsIgnoreCase(emp.getLocation()) ||
-                         emp.getLocation().equals(location)))
+                    (locationId != null && emp.getLocationId() != null &&
+                        (locationId.equals(emp.getLocationId()) ||
+                         locationId.equalsIgnoreCase(emp.getLocationId()) ||
+                         emp.getLocationId().equals(locationId)))
                     &&
-                    (departement != null && emp.getDepartement() != null &&
-                        (departement.equals(emp.getDepartement()) ||
-                         departement.equalsIgnoreCase(emp.getDepartement()) ||
-                         emp.getDepartement().equals(departement)))
+                    (departementId != null && emp.getDepartementId() != null &&
+                        (departementId.equals(emp.getDepartementId()) ||
+                         departementId.equalsIgnoreCase(emp.getDepartementId()) ||
+                         emp.getDepartementId().equals(departementId)))
                 ))
                 .toList();
         } else {
@@ -71,6 +71,19 @@ public class EmployeeController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("employee", new Employee());
+        // Préparer les maps id->nom pour location et departement
+        var locations = locationRepository.findAll();
+        var departements = departementRepository.findAll();
+        java.util.Map<String, String> locationMap = new java.util.HashMap<>();
+        for (Location loc : locations) {
+            locationMap.put(loc.getId(), loc.getNom());
+        }
+        java.util.Map<String, String> departementMap = new java.util.HashMap<>();
+        for (Departement dep : departements) {
+            departementMap.put(dep.getId(), dep.getNom());
+        }
+        model.addAttribute("locationMap", locationMap);
+        model.addAttribute("departementMap", departementMap);
         return "employees/create";
     }
 
@@ -96,7 +109,7 @@ public class EmployeeController {
 
     @PostMapping("/{id}/edit")
     public String updateEmployee(@PathVariable String id, @ModelAttribute Employee employee) {
-    employee.setId(id);
+        employee.setId(id);
         employeeRepository.save(employee);
         return "redirect:/employees/" + id;
     }
