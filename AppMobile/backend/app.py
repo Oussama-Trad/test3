@@ -16,9 +16,12 @@ app.config['SECRET_KEY'] = '123'  # JWT_SECRET_KEY
 # Connexion MongoDB et collections centralisées dans extensions.py
 from extensions import db, employee_collection, location_collection, departement_collection
 
-# Importer et enregistrer le blueprint documents APRÈS la définition de app, db, token_required, etc.
+
+# Importer et enregistrer les blueprints
 from documents import bp as documents_bp
 app.register_blueprint(documents_bp)
+from actualites import bp as actualites_bp
+app.register_blueprint(actualites_bp)
 
 def token_required(f):
     @wraps(f)

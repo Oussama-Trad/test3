@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+import ActualitesScreen from './views/screens/ActualitesScreen';
 function MainTabs() {
   const { user } = useContext(UserContext);
   return (
@@ -24,9 +25,11 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
           let iconName;
-          if (route.name === 'Accueil') iconName = 'home';
+          if (route.name === 'Actualités') iconName = 'newspaper';
+          else if (route.name === 'Documents') iconName = 'document';
           else if (route.name === 'Mon Profil') iconName = 'person';
           else if (route.name === 'Messagerie') iconName = 'chatbubble';
+          else iconName = 'home';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#1D2D51',
@@ -37,10 +40,10 @@ function MainTabs() {
         tabBarStyle: { backgroundColor: '#fff' },
       })}
     >
-  <Tab.Screen name="Accueil" component={HomeScreen} />
-  <Tab.Screen name="Documents" component={DocumentScreen} />
-  <Tab.Screen name="Mon Profil" component={ProfileScreen} />
-  <Tab.Screen name="Messagerie" component={MessagesScreen} />
+      <Tab.Screen name="Actualités" component={ActualitesScreen} />
+      <Tab.Screen name="Documents" component={DocumentScreen} />
+      <Tab.Screen name="Mon Profil" component={ProfileScreen} />
+      <Tab.Screen name="Messagerie" component={MessagesScreen} />
     </Tab.Navigator>
   );
 }
