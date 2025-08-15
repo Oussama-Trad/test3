@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Messagerie - Conversation</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="fragments/navbar :: navbar"></div>
+<div class="container">
+    <h2>Conversation avec <span th:text="${employee.nom}"></span> <span th:text="${employee.prenom}"></span></h2>
+    <div class="conversation-info">
+    <span th:text="'Location : ' + ${employee.locationId}"></span> |
+        <span th:text="'Département : ' + ${employee.departement}"></span>
+    </div>
+    <div class="messages-list">
+        <div th:each="msg : ${messages}" th:classappend="${msg.senderType} == 'admin' ? 'admin-msg' : 'employee-msg'">
+            <div class="msg-content" th:text="${msg.content}"></div>
+            <div class="msg-date" th:text="${#dates.format(msg.timestamp, 'dd/MM/yyyy HH:mm')}"></div>
+        </div>
+    </div>
+    <form th:action="@{'/messages/' + ${employee.id}}" method="post" class="send-form">
+        <input type="text" name="content" placeholder="Votre message..." required />
+        <button type="submit">Envoyer</button>
+    </form>
+</div>
+</body>
+</html>

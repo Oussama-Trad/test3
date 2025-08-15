@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Messagerie - Conversations</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<div th:replace="fragments/navbar :: sidebar"></div>
+<div class="container">
+    <h2>Messagerie interne</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Location</th>
+                <th>Département</th>
+                <th>Dernier message</th>
+                <th>Date/Heure</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        <!-- Boucle sur les conversations -->
+        <tr th:each="conv : ${conversations}">
+            <td th:text="${conv.employee.nom}"></td>
+            <td th:text="${conv.employee.prenom}"></td>
+            <td th:text="${conv.employee.locationId}"></td>
+            <td th:text="${conv.employee.departementId}"></td>
+            <td th:text="${conv.lastMessage}"></td>
+            <td th:text="${conv.lastDate}"></td>
+            <td>
+                <a th:href="@{'/messages/' + ${conv.employee.id}}" class="btn btn-primary">Ouvrir</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

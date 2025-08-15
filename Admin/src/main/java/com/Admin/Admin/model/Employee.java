@@ -1,6 +1,7 @@
 package com.Admin.Admin.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.Date;
 
@@ -8,6 +9,8 @@ import java.util.Date;
 public class Employee {
     @Id
     private String id;
+    @Field("id")
+    private String customId; // correspond au champ 'id' dans MongoDB
     private String nom;
     private String prenom;
     private String adresse1;
@@ -41,6 +44,12 @@ public class Employee {
     }
     public void setId(String id) {
         this.id = id;
+    }
+    public String getCustomId() {
+        return customId;
+    }
+    public void setCustomId(String customId) {
+        this.customId = customId;
     }
     public String getAdresse1() {
         return adresse1;

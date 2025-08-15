@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
+import { UserContext } from '../../context/UserContext';
 import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 
-// On suppose que l'utilisateur courant est stocké dans le contexte ou AsyncStorage
-// Ici, on simule un userId pour la démo
-const CURRENT_USER_ID = 'employeId';
 
 const ChatConversation = ({ route }) => {
+  const { user } = useContext(UserContext);
+  const CURRENT_USER_ID = user?.id || '';
   const { admin } = route.params;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +22,7 @@ const ChatConversation = ({ route }) => {
   const fetchMessages = async () => {
     setLoading(true);
     try {
-      const url = `http://localhost:5000/api/messages?user1=${CURRENT_USER_ID}&user2=${admin._id}`;
+  const url = `http://localhost:5000/api/messages?user1=${CURRENT_USER_ID}&user2=${admin._id}`;
       const res = await fetch(url);
       const data = await res.json();
       setMessages(data);
