@@ -1,29 +1,85 @@
+
+
+# --- IMPORTS EN HAUT DU FICHIER ---
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from werkzeug.security import generate_password_hash, check_password_hash
-from events_api import bp_events
+from werkzeug.security import check_password_hash
 from datetime import datetime, timedelta
+from bson import ObjectId
 import jwt
 import os
 from functools import wraps
-from auth_utils import token_required
+from pymongo import MongoClient
+from extensions import db, employee_collection, location_collection, departement_collection
+from pymongo import MongoClient
 
+# Connexion à la collection messages
+client = MongoClient('mongodb+srv://oussamatrzd19:oussama123@leoniapp.grhnzgz.mongodb.net/')
+db = client['DBLEONI']
+messages_collection = db['messages']
+from events_api import bp_events
+from auth_utils import token_required
+from documents import bp as documents_bp
+from actualites import bp as actualites_bp
+
+# --- APP INIT ---
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-
-# Configuration
 app.config['SECRET_KEY'] = '123'  # JWT_SECRET_KEY
 
-# Connexion MongoDB et collections centralisées dans extensions.py
-from extensions import db, employee_collection, location_collection, departement_collection
-
-
-# Importer et enregistrer les blueprints
-from documents import bp as documents_bp
+# --- BLUEPRINTS ---
 app.register_blueprint(documents_bp)
-from actualites import bp as actualites_bp
 app.register_blueprint(actualites_bp)
 app.register_blueprint(bp_events)
+
+# --- ENDPOINT ADMINS ---
+@app.route('/api/admins', methods=['GET'])
+def get_admins():
+    # Connexion directe à la base MongoDB (même config que extensions.py)
+    client = MongoClient('mongodb+srv://oussamatrzd19:oussama123@leoniapp.grhnzgz.mongodb.net/')
+    db = client['DBLEONI']
+    admin_col = db['admin']
+    superadmin_col = db['superadmin']
+
+    location = request.args.get('locationId')
+    departement = request.args.get('departementId')
+
+    # Récupérer tous les admins/superadmins
+    admins = list(admin_col.find({}))
+    superadmins = list(superadmin_col.find({}))
+
+    # Filtrage côté Python pour robustesse (comparaison sur string)
+    def match_filters(a):
+        if location and str(a.get('location', '')) != str(location):
+            return False
+        if departement and str(a.get('departement', '')) != str(departement):
+            return False
+        return True
+
+    filtered_admins = [a for a in admins if match_filters(a)]
+    filtered_superadmins = [a for a in superadmins if match_filters(a)]
+
+    def serialize_admin(a):
+        return {
+            '_id': str(a['_id']),
+            'nom': a.get('nom', ''),
+            'prenom': a.get('prenom', ''),
+            'locationId': a.get('location', ''),
+            'departementId': a.get('departement', ''),
+            'role': a.get('role', 'admin'),
+        }
+    def serialize_superadmin(a):
+        return {
+            '_id': str(a['_id']),
+            'nom': a.get('nom', ''),
+            'prenom': a.get('prenom', ''),
+            'locationId': a.get('location', ''),
+            'departementId': a.get('departement', ''),
+            'role': a.get('role', 'superadmin'),
+        }
+
+    all_admins = [serialize_admin(a) for a in filtered_admins] + [serialize_superadmin(a) for a in filtered_superadmins]
+    return jsonify(all_admins)
 
 
 @app.route('/api/locations-full', methods=['GET'])
@@ -203,6 +259,62 @@ def profile(current_user):
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({'message': 'Mobile app backend is running'}), 200
+
+
+# --- ROUTES MESSAGERIE ---
+@app.route('/api/messages', methods=['GET', 'POST'])
+def messages():
+    print(f"--- /api/messages {request.method} ---")
+    print(f"Headers: {dict(request.headers)}")
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
+            print(f"POST data: {data}")
+            # Accepte camelCase ou snake_case
+            sender_id = data.get('sender_id') or data.get('senderId')
+            receiver_id = data.get('receiver_id') or data.get('receiverId')
+            content = data.get('content') or data.get('message')
+            if not sender_id or not receiver_id or not content:
+                print("Champ manquant dans POST /api/messages")
+                return jsonify({'message': 'sender_id, receiver_id, and content are required'}), 400
+            message = {
+                'sender_id': sender_id,
+                'receiver_id': receiver_id,
+                'content': content,
+                'timestamp': datetime.utcnow()
+            }
+            result = messages_collection.insert_one(message)
+            print(f"Message inséré avec _id: {result.inserted_id}")
+            return jsonify({'message': 'Message sent successfully'}), 201
+        except Exception as e:
+            print(f"Erreur POST /api/messages: {e}")
+            return jsonify({'message': str(e)}), 500
+    else:  # GET
+        try:
+            user1 = request.args.get('user1')
+            user2 = request.args.get('user2')
+            print(f"GET params: user1={user1}, user2={user2}")
+            if not user1 or not user2:
+                print("Paramètre manquant dans GET /api/messages")
+                return jsonify({'message': 'user1 and user2 are required'}), 400
+            conv = list(messages_collection.find({
+                '$or': [
+                    {'sender_id': user1, 'receiver_id': user2},
+                    {'sender_id': user2, 'receiver_id': user1}
+                ]
+            }).sort('timestamp', 1))
+            print(f"Messages trouvés: {len(conv)}")
+            messages_list = [{
+                '_id': str(m['_id']),
+                'sender_id': m['sender_id'],
+                'receiver_id': m['receiver_id'],
+                'content': m['content'],
+                'timestamp': m['timestamp'].isoformat() + 'Z'
+            } for m in conv]
+            return jsonify(messages_list), 200
+        except Exception as e:
+            print(f"Erreur GET /api/messages: {e}")
+            return jsonify({'message': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

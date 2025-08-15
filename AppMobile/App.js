@@ -1,20 +1,30 @@
-import React, { useContext } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import SplashScreen from './views/screens/SplashScreen';
 import AuthScreen from './views/screens/AuthScreen';
 import ProfileScreen from './views/screens/ProfileScreen';
 import EditProfileScreen from './views/screens/EditProfileScreen';
 import LoginScreen from './views/screens/LoginScreen';
 import RegisterScreen from './views/screens/RegisterScreen';
-import { NavigationContainer } from '@react-navigation/native';
-import EventsScreen from './views/screens/EventsScreen';
-import EventDetailScreen from './views/screens/EventDetailScreen';
-import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from './views/screens/HomeScreen';
 import MessagesScreen from './views/screens/MessagesScreen';
 import DocumentScreen from './views/screens/DocumentScreen';
+import ActualiteDetailScreen from './views/screens/ActualiteDetailScreen';
+import EventsScreen from './views/screens/EventsScreen';
+import EventDetailScreen from './views/screens/EventDetailScreen';
+import ChatServiceScreen from './views/screens/ChatServiceScreen';
+import ChatConversation from './views/screens/ChatConversation';
+import HomeScreen from './views/screens/HomeScreen';
 import { UserProvider, UserContext } from './context/UserContext';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useContext } from 'react';
+
+
+
+
+
+
+
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -64,6 +74,8 @@ export default function App() {
           <Stack.Screen name="ActualiteDetail" component={require('./views/screens/ActualiteDetailScreen').default} options={{ headerShown: true, title: 'Détail actualité' }} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: 'Détail événement' }} />
+          <Stack.Screen name="ChatService" component={ChatServiceScreen} options={{ headerShown: true, title: 'Chat avec Service' }} />
+          <Stack.Screen name="ChatConversation" component={ChatConversation} options={{ headerShown: true, title: 'Conversation' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>
