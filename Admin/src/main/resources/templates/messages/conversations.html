@@ -23,14 +23,15 @@
         <tbody>
         <!-- Boucle sur les conversations -->
         <tr th:each="conv : ${conversations}">
-            <td th:text="${conv.employee.nom}"></td>
-            <td th:text="${conv.employee.prenom}"></td>
-            <td th:text="${conv.employee.locationId}"></td>
-            <td th:text="${conv.employee.departementId}"></td>
+            <td th:text="${conv.employee != null ? conv.employee.nom : (conv.employeeSnapshot != null ? conv.employeeSnapshot.nom : 'Employé inconnu')}"></td>
+            <td th:text="${conv.employee != null ? conv.employee.prenom : (conv.employeeSnapshot != null ? conv.employeeSnapshot.prenom : '')}"></td>
+            <td th:text="${conv.employee != null ? conv.employee.locationId : (conv.locationName != null ? conv.locationName : '')}"></td>
+            <td th:text="${conv.employee != null ? conv.employee.departementId : (conv.departementName != null ? conv.departementName : '')}"></td>
             <td th:text="${conv.lastMessage}"></td>
             <td th:text="${conv.lastDate}"></td>
             <td>
-                <a th:href="@{'/messages/' + ${conv.employee.id}}" class="btn btn-primary">Ouvrir</a>
+                <a th:if="${conv.employee != null}" th:href="@{'/messages/' + ${conv.employee.id}}" class="btn btn-primary">Ouvrir</a>
+                <a th:if="${conv.employee == null}" th:href="@{'/messages/' + ${conv.fallbackId}}" class="btn btn-warning">Accéder</a>
             </td>
         </tr>
         </tbody>

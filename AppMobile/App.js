@@ -5,7 +5,7 @@ import ProfileScreen from './views/screens/ProfileScreen';
 import EditProfileScreen from './views/screens/EditProfileScreen';
 import LoginScreen from './views/screens/LoginScreen';
 import RegisterScreen from './views/screens/RegisterScreen';
-import MessagesScreen from './views/screens/MessagesScreen';
+import ConversationsScreen from './views/screens/ConversationsScreen';
 import DocumentScreen from './views/screens/DocumentScreen';
 import ActualiteDetailScreen from './views/screens/ActualiteDetailScreen';
 import EventsScreen from './views/screens/EventsScreen';
@@ -55,7 +55,7 @@ function MainTabs() {
       <Tab.Screen name="Actualités" component={ActualitesScreen} />
       <Tab.Screen name="Documents" component={DocumentScreen} />
       <Tab.Screen name="Mon Profil" component={ProfileScreen} />
-      <Tab.Screen name="Messagerie" component={MessagesScreen} />
+  <Tab.Screen name="Messagerie" component={ConversationsScreen} />
     <Tab.Screen name="Événements" component={EventsScreen} />
     </Tab.Navigator>
   );

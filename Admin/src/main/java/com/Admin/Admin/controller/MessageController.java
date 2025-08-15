@@ -1,4 +1,8 @@
+
 package com.Admin.Admin.controller;
+
+import com.Admin.Admin.repository.LocationRepository;
+import com.Admin.Admin.repository.DepartementRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -27,6 +31,11 @@ public class MessageController {
 
     @Autowired
     private MessageService messageService;
+
+    @Autowired
+    private LocationRepository locationRepository;
+    @Autowired
+    private DepartementRepository departementRepository;
 
     // Affiche la liste des conversations
     @GetMapping("")
@@ -63,8 +72,21 @@ public class MessageController {
             String employeeId = doc.getString("_id");
             System.out.println("[DEBUG] Looking up employee for id: " + employeeId);
             Employee employee = null;
-            // 1. Recherche par _id (ObjectId)
-            if (employeeId != null && employeeId.matches("^[a-fA-F0-9]{24}$")) {
+            // 1. Recherche par champ 'id' (court)
+            if (employeeId != null) {
+                try {
+                    org.springframework.data.mongodb.core.query.Query query2 = new org.springframework.data.mongodb.core.query.Query();
+                    query2.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("id").is(employeeId));
+                    employee = mongoTemplate.findOne(query2, Employee.class);
+                    if (employee != null) {
+                        System.out.println("[DEBUG] Found employee by champ 'id': " + employee);
+                    }
+                } catch (Exception e) {
+                    System.out.println("[DEBUG] Exception during champ 'id' lookup: " + e.getMessage());
+                }
+            }
+            // 2. Recherche par _id (ObjectId) si non trouvé
+            if (employee == null && employeeId != null && employeeId.matches("^[a-fA-F0-9]{24}$")) {
                 try {
                     org.springframework.data.mongodb.core.query.Query query = new org.springframework.data.mongodb.core.query.Query();
                     query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("_id").is(new org.bson.types.ObjectId(employeeId)));
@@ -76,27 +98,48 @@ public class MessageController {
                     System.out.println("[DEBUG] Exception during ObjectId lookup: " + e.getMessage());
                 }
             }
-            // 2. Recherche par champ 'customId' (champ 'id' dans MongoDB)
-            if (employee == null) {
-                try {
-                    org.springframework.data.mongodb.core.query.Query query2 = new org.springframework.data.mongodb.core.query.Query();
-                    query2.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("customId").is(employeeId));
-                    employee = mongoTemplate.findOne(query2, Employee.class);
-                    if (employee != null) {
-                        System.out.println("[DEBUG] Found employee by champ 'customId': " + employee);
-                    }
-                } catch (Exception e) {
-                    System.out.println("[DEBUG] Exception during champ 'customId' lookup: " + e.getMessage());
-                }
-            }
             if (employee == null) {
                 System.out.println("[DEBUG] Employee not found for id or _id: " + employeeId);
-                continue;
+            }
+            // Get employeeSnapshot if present
+            Map<String, Object> employeeSnapshot = null;
+            String locationName = "";
+            String departementName = "";
+            if (doc.containsKey("employeeSnapshot")) {
+                Object snap = doc.get("employeeSnapshot");
+                if (snap instanceof Map) {
+                    employeeSnapshot = (Map<String, Object>) snap;
+                } else if (snap instanceof Document) {
+                    employeeSnapshot = ((Document) snap);
+                }
+                if (employeeSnapshot != null) {
+                    // Résoudre le nom de la location
+                    Object locId = employeeSnapshot.get("locationId");
+                    if (locId != null && !locId.toString().isEmpty()) {
+                        Location loc = locationRepository.findById(locId.toString()).orElse(null);
+                        if (loc != null) locationName = loc.getNom();
+                    }
+                    // Résoudre le nom du département
+                    Object depId = employeeSnapshot.get("departementId");
+                    if (depId != null && !depId.toString().isEmpty()) {
+                        Departement dep = departementRepository.findById(depId.toString()).orElse(null);
+                        if (dep != null) departementName = dep.getNom();
+                    }
+                }
             }
             Map<String, Object> conv = new HashMap<>();
             conv.put("employee", employee);
+            conv.put("employeeSnapshot", employeeSnapshot);
+            conv.put("locationName", locationName);
+            conv.put("departementName", departementName);
             conv.put("lastMessage", doc.get("lastMessage"));
             conv.put("lastDate", doc.get("lastDate"));
+            // Fallback id for Accéder button
+            String fallbackId = employeeId;
+            if (employeeSnapshot != null && employeeSnapshot.get("id") != null && !employeeSnapshot.get("id").toString().isEmpty()) {
+                fallbackId = employeeSnapshot.get("id").toString();
+            }
+            conv.put("fallbackId", fallbackId);
             conversations.add(conv);
         }
         System.out.println("[DEBUG] conversations size: " + conversations.size());

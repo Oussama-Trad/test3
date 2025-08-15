@@ -1,4 +1,120 @@
 
+# --- APP INIT ---
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from werkzeug.security import check_password_hash
+from datetime import datetime, timedelta
+from bson import ObjectId
+import jwt
+import os
+from functools import wraps
+from pymongo import MongoClient
+from extensions import db, employee_collection, location_collection, departement_collection
+from pymongo import MongoClient
+
+# Connexion à la collection messages
+client = MongoClient('mongodb+srv://oussamatrzd19:oussama123@leoniapp.grhnzgz.mongodb.net/')
+db = client['DBLEONI']
+messages_collection = db['messages']
+from events_api import bp_events
+from auth_utils import token_required
+from documents import bp as documents_bp
+from actualites import bp as actualites_bp
+
+# --- APP INIT ---
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+app.config['SECRET_KEY'] = '123'  # JWT_SECRET_KEY
+
+# --- BLUEPRINTS ---
+app.register_blueprint(documents_bp)
+app.register_blueprint(actualites_bp)
+app.register_blueprint(bp_events)
+
+# Nouvelle route pour lister les conversations d'un employé (mobile)
+
+@app.route('/api/conversations', methods=['GET'])
+def get_employee_conversations():
+    print("[DEBUG] /api/conversations route CALLED")
+    try:
+        employee_id = request.args.get('employeeId')
+        print(f"[DEBUG] employeeId param: {employee_id}")
+        if not employee_id:
+            print("[DEBUG] Pas d'employeeId fourni")
+            return jsonify([])
+        # Chercher l'employé pour récupérer son _id (ObjectId) et son id (string)
+        employee = db.employee.find_one({'id': employee_id})
+        print(f"[DEBUG] employee query result: {employee}")
+        employee_object_id = None
+        if employee:
+            employee_object_id = str(employee.get('_id'))
+            print(f"[DEBUG] Employé trouvé: id={employee_id}, _id={employee_object_id}")
+        else:
+            print(f"[DEBUG] Aucun employé trouvé avec id={employee_id}")
+        # Récupérer tous les messages où l'employé est sender ou receiver (par id ou _id)
+        or_conditions = [
+            {'sender_id': employee_id},
+            {'receiver_id': employee_id}
+        ]
+        if employee_object_id:
+            or_conditions.append({'sender_id': employee_object_id})
+            or_conditions.append({'receiver_id': employee_object_id})
+        print(f"[DEBUG] or_conditions for messages: {or_conditions}")
+        messages = list(db.messages.find({
+            '$or': or_conditions
+        }).sort('timestamp', -1))
+        print(f"[DEBUG] Messages trouvés pour employé {employee_id} (ou _id {employee_object_id}): {len(messages)}")
+        for m in messages:
+            print(f"[DEBUG] Message: sender_id={m.get('sender_id')} receiver_id={m.get('receiver_id')} content={m.get('content')}")
+        # Regrouper par admin contacté
+        conversations = {}
+        for msg in messages:
+            # L'autre participant
+            if msg['sender_id'] == employee_id:
+                admin_id = msg['receiver_id']
+            else:
+                admin_id = msg['sender_id']
+            print(f"[DEBUG] Recherche admin pour admin_id={admin_id}")
+            admin = None
+            from bson import ObjectId
+            # Essayer par _id (ObjectId)
+            try:
+                admin = db.admin.find_one({'_id': ObjectId(admin_id)})
+                if not admin:
+                    admin = db.superadmin.find_one({'_id': ObjectId(admin_id)})
+            except Exception as e:
+                print(f"[DEBUG] Exception ObjectId: {e}")
+            # Essayer par _id (string)
+            if not admin:
+                admin = db.admin.find_one({'_id': admin_id})
+                if not admin:
+                    admin = db.superadmin.find_one({'_id': admin_id})
+            # Essayer par id personnalisé (champ 'id')
+            if not admin:
+                admin = db.admin.find_one({'id': admin_id})
+                if not admin:
+                    admin = db.superadmin.find_one({'id': admin_id})
+            print(f"[DEBUG] Résultat admin trouvé: {admin}")
+            if not admin:
+                continue
+            if admin_id not in conversations:
+                conversations[admin_id] = {
+                    'admin': {
+                        '_id': str(admin_id),
+                        'nom': admin.get('nom', ''),
+                        'prenom': admin.get('prenom', ''),
+                        'locationId': str(admin.get('location', '')),
+                        'departementId': str(admin.get('departement', '')),
+                    },
+                    'lastMessage': msg.get('content', msg.get('message', '')),
+                    'lastDate': msg.get('timestamp')
+                }
+        print(f"[DEBUG] Conversations trouvées: {len(conversations)}")
+        return jsonify(list(conversations.values()))
+    except Exception as e:
+        print(f"[DEBUG] Exception dans /api/conversations: {e}")
+        return jsonify({'error': str(e)}), 500
+
 
 # --- IMPORTS EN HAUT DU FICHIER ---
 from flask import Flask, request, jsonify
@@ -59,13 +175,14 @@ def get_admins():
     filtered_admins = [a for a in admins if match_filters(a)]
     filtered_superadmins = [a for a in superadmins if match_filters(a)]
 
+
     def serialize_admin(a):
         return {
             '_id': str(a['_id']),
             'nom': a.get('nom', ''),
             'prenom': a.get('prenom', ''),
-            'locationId': a.get('location', ''),
-            'departementId': a.get('departement', ''),
+            'locationId': str(a.get('location', '')),
+            'departementId': str(a.get('departement', '')),
             'role': a.get('role', 'admin'),
         }
     def serialize_superadmin(a):
@@ -73,8 +190,8 @@ def get_admins():
             '_id': str(a['_id']),
             'nom': a.get('nom', ''),
             'prenom': a.get('prenom', ''),
-            'locationId': a.get('location', ''),
-            'departementId': a.get('departement', ''),
+            'locationId': str(a.get('location', '')),
+            'departementId': str(a.get('departement', '')),
             'role': a.get('role', 'superadmin'),
         }
 
@@ -261,6 +378,7 @@ def health_check():
     return jsonify({'message': 'Mobile app backend is running'}), 200
 
 
+
 # --- ROUTES MESSAGERIE ---
 @app.route('/api/messages', methods=['GET', 'POST'])
 def messages():
@@ -270,7 +388,6 @@ def messages():
         try:
             data = request.get_json()
             print(f"POST data: {data}")
-            # Accepte camelCase ou snake_case
             sender_id = data.get('sender_id') or data.get('senderId')
             receiver_id = data.get('receiver_id') or data.get('receiverId')
             content = data.get('content') or data.get('message')
@@ -285,6 +402,59 @@ def messages():
             }
             result = messages_collection.insert_one(message)
             print(f"Message inséré avec _id: {result.inserted_id}")
+
+            # --- GESTION CONVERSATIONS ---
+            # On cherche une conversation existante entre les deux participants
+            participants = sorted([str(sender_id), str(receiver_id)])
+            conv_query = {"participants": participants}
+            conversation = db.conversations.find_one(conv_query)
+            if conversation:
+                # Mettre à jour le dernier message et la date
+                db.conversations.update_one(
+                    {"_id": conversation["_id"]},
+                    {"$set": {
+                        "lastMessage": {
+                            "sender_id": sender_id,
+                            "content": content,
+                            "timestamp": message['timestamp']
+                        },
+                        "updatedAt": datetime.utcnow()
+                    }}
+                )
+                print(f"Conversation mise à jour pour participants {participants}")
+            else:
+                # Créer une nouvelle conversation avec snapshot employé
+                employee_snapshot = None
+                # On suppose que l'employé est toujours le sender (sinon inverser)
+                emp = None
+                try:
+                    emp = db.employee.find_one({'id': sender_id})
+                    if not emp:
+                        emp = db.employee.find_one({'_id': sender_id})
+                except Exception as e:
+                    print(f"[DEBUG] Exception recherche employé pour snapshot: {e}")
+                if emp:
+                    employee_snapshot = {
+                        'id': str(emp.get('id', '')),
+                        'nom': emp.get('nom', ''),
+                        'prenom': emp.get('prenom', ''),
+                        'locationId': str(emp.get('locationId', emp.get('location', ''))),
+                        'departementId': str(emp.get('departementId', emp.get('departement', '')))
+                    }
+                conv_doc = {
+                    "participants": participants,
+                    "lastMessage": {
+                        "sender_id": sender_id,
+                        "content": content,
+                        "timestamp": message['timestamp']
+                    },
+                    "createdAt": datetime.utcnow(),
+                    "updatedAt": datetime.utcnow(),
+                    "employeeSnapshot": employee_snapshot
+                }
+                db.conversations.insert_one(conv_doc)
+                print(f"Nouvelle conversation créée pour participants {participants} (snapshot employé inclus)")
+
             return jsonify({'message': 'Message sent successfully'}), 201
         except Exception as e:
             print(f"Erreur POST /api/messages: {e}")
@@ -315,6 +485,48 @@ def messages():
         except Exception as e:
             print(f"Erreur GET /api/messages: {e}")
             return jsonify({'message': str(e)}), 500
+
+# Nouvelle route pour lister les conversations d'un employé (mobile)
+@app.route('/api/conversations', methods=['GET'])
+def get_employee_conversations():
+    print("[DEBUG] /api/conversations route CALLED")
+    try:
+        employee_id = request.args.get('employeeId')
+        print(f"[DEBUG] employeeId param: {employee_id}")
+        if not employee_id:
+            print("[DEBUG] Pas d'employeeId fourni")
+            return jsonify([])
+        # On cherche toutes les conversations où l'employé est participant
+        conversations = list(db.conversations.find({"participants": {"$in": [employee_id]}}).sort("updatedAt", -1))
+        print(f"[DEBUG] Conversations trouvées: {len(conversations)}")
+        # Pour chaque conversation, retrouver l'admin participant
+        result = []
+        for conv in conversations:
+            admin_id = [pid for pid in conv["participants"] if pid != employee_id][0] if len(conv["participants"]) > 1 else None
+            admin = None
+            if admin_id:
+                admin = db.admin.find_one({'id': admin_id})
+                if not admin:
+                    admin = db.admin.find_one({'_id': admin_id})
+                if not admin:
+                    admin = db.superadmin.find_one({'id': admin_id})
+                if not admin:
+                    admin = db.superadmin.find_one({'_id': admin_id})
+            result.append({
+                'admin': {
+                    '_id': str(admin_id) if admin_id else '',
+                    'nom': admin.get('nom', '') if admin else '',
+                    'prenom': admin.get('prenom', '') if admin else '',
+                    'locationId': str(admin.get('location', '')) if admin else '',
+                    'departementId': str(admin.get('departement', '')) if admin else '',
+                },
+                'lastMessage': conv.get('lastMessage', {}).get('content', ''),
+                'lastDate': conv.get('lastMessage', {}).get('timestamp', ''),
+            })
+        return jsonify(result)
+    except Exception as e:
+        print(f"[DEBUG] Exception dans /api/conversations: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

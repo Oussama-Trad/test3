@@ -5,12 +5,12 @@
     <link rel="stylesheet" th:href="@{/css/style.css}" />
 </head>
 <body>
-<div th:replace="fragments/navbar :: navbar"></div>
+<div th:replace="~{fragments/navbar :: sidebar}"></div>
 <div class="container">
     <h2>Conversation avec <span th:text="${employee.nom}"></span> <span th:text="${employee.prenom}"></span></h2>
     <div class="conversation-info">
-    <span th:text="'Location : ' + ${employee.locationId}"></span> |
-        <span th:text="'Département : ' + ${employee.departement}"></span>
+        <span th:text="'Location : ' + ${employee.locationId}"></span> |
+        <span th:text="'Département : ' + ${employee.departementId}"></span>
     </div>
     <div class="messages-list">
         <div th:each="msg : ${messages}" th:classappend="${msg.senderType} == 'admin' ? 'admin-msg' : 'employee-msg'">
