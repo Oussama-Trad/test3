@@ -58,6 +58,7 @@ export default function App() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen name="ActualiteDetail" component={require('./views/screens/ActualiteDetailScreen').default} options={{ headerShown: true, title: 'Détail actualité' }} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         </Stack.Navigator>
       </NavigationContainer>

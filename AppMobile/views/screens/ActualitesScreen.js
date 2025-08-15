@@ -1,14 +1,21 @@
+
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserContext } from '../../context/UserContext';
 
 const API_URL = 'http://localhost:5000/api';
 
+
+import { useNavigation } from '@react-navigation/native';
+
+const { width } = Dimensions.get('window');
+
 const ActualitesScreen = () => {
   const { user } = useContext(UserContext);
   const [actualites, setActualites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchActualites = async () => {
@@ -29,13 +36,19 @@ const ActualitesScreen = () => {
   }, []);
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      {item.photo && (
-        <Image source={{ uri: item.photo }} style={styles.image} />
-      )}
-      <Text style={styles.title}>{item.titre}</Text>
-      <Text style={styles.desc}>{item.description}</Text>
-    </View>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.8}
+      onPress={() => navigation.navigate('ActualiteDetail', { actualite: item })}
+    >
+      {item.photo ? (
+        <Image source={{ uri: item.photo.startsWith('http') ? item.photo : `${API_URL}/uploads/${item.photo}` }} style={styles.image} />
+      ) : null}
+      <View style={styles.textContainer}>
+        <Text style={styles.title} numberOfLines={2}>{item.titre}</Text>
+        <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>
+      </View>
+    </TouchableOpacity>
   );
 
   if (loading) return <ActivityIndicator size="large" color="#1D2D51" style={{ marginTop: 40 }} />;
@@ -58,28 +71,37 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    marginBottom: 10,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
+    minHeight: 80,
+    maxWidth: width - 32,
   },
   image: {
-    width: '100%',
-    height: 180,
+    width: 70,
+    height: 70,
     borderRadius: 8,
-    marginBottom: 10,
+    marginRight: 12,
+    backgroundColor: '#eee',
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1D2D51',
-    marginBottom: 6,
+    marginBottom: 2,
   },
   desc: {
-    fontSize: 15,
+    fontSize: 13,
     color: '#333',
   },
   empty: {

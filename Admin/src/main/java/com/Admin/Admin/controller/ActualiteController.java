@@ -93,11 +93,12 @@ public class ActualiteController {
             actualite.setPhoto(fileName);
         }
         if ("superadmin".equals(role)) {
-            // Superadmin peut choisir locationId et departementId (ou tous)
-            if ((actualite.getLocationId() == null || actualite.getLocationId().isEmpty()) &&
-                (actualite.getDepartementId() == null || actualite.getDepartementId().isEmpty())) {
-                // Si rien n'est choisi, on ne poste pas
-                return "redirect:/actualites?error=selection";
+            // Si le superadmin ne choisit rien ou "tout", on enregistre 'all' pour toucher tout le monde
+            if (actualite.getLocationId() == null || actualite.getLocationId().isEmpty() || "tout".equalsIgnoreCase(actualite.getLocationId())) {
+                actualite.setLocationId("all");
+            }
+            if (actualite.getDepartementId() == null || actualite.getDepartementId().isEmpty() || "tout".equalsIgnoreCase(actualite.getDepartementId())) {
+                actualite.setDepartementId("all");
             }
         } else if (user instanceof Admin admin) {
             // Admin classique : impose sa location et département
