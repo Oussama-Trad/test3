@@ -22,9 +22,9 @@ def serialize_actualite(doc):
 @token_required
 def get_actualites(current_user):
     try:
-        # Récupérer location et departement de l'employé
-        user_location = current_user.get('location')
-        user_departement = current_user.get('departement')
+        # Récupérer locationId et departementId de l'employé
+        user_location = current_user.get('locationId', current_user.get('location', ''))
+        user_departement = current_user.get('departementId', current_user.get('departement', ''))
         # Filtre pour actualités ciblées
         query = {
             '$or': [
