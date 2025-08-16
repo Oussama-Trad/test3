@@ -1,5 +1,4 @@
-import LeaveRequestScreen from './screens/LeaveRequestScreen';
-import MyLeavesScreen from './screens/MyLeavesScreen';
+import LeaveRequestForm from './views/screens/LeaveRequestForm';
 import { Ionicons } from '@expo/vector-icons';
 import SplashScreen from './views/screens/SplashScreen';
 import AuthScreen from './views/screens/AuthScreen';
@@ -32,6 +31,7 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 import ActualitesScreen from './views/screens/ActualitesScreen';
+import MyLeavesScreen from './views/screens/MyLeavesScreen';
 function MainTabs() {
   const { user } = useContext(UserContext);
   return (
@@ -80,7 +80,7 @@ export default function App() {
       <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: 'Détail événement' }} />
           <Stack.Screen name="ChatService" component={ChatServiceScreen} options={{ headerShown: true, title: 'Chat avec Service' }} />
           <Stack.Screen name="ChatConversation" component={ChatConversation} options={{ headerShown: true, title: 'Conversation' }} />
-            <Stack.Screen name="LeaveRequest" component={LeaveRequestScreen} options={{ headerShown: true, title: 'Demande de congé' }} />
+            <Stack.Screen name="LeaveRequest" component={LeaveRequestForm} options={{ headerShown: true, title: 'Demande de congé' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>
