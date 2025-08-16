@@ -1,14 +1,11 @@
-
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, ActivityIndicator, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserContext } from '../../context/UserContext';
+import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const API_URL = 'http://localhost:5000/api';
-
-
-import { useNavigation } from '@react-navigation/native';
-
 const { width } = Dimensions.get('window');
 
 const ActualitesScreen = () => {
@@ -38,21 +35,48 @@ const ActualitesScreen = () => {
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
-      activeOpacity={0.8}
+      activeOpacity={0.7}
       onPress={() => navigation.navigate('ActualiteDetail', { actualite: item })}
     >
-      {item.photo ? (
-        <Image source={{ uri: item.photo.startsWith('http') ? item.photo : `${API_URL}/uploads/${item.photo}` }} style={styles.image} />
-      ) : null}
-      <View style={styles.textContainer}>
-        <Text style={styles.title} numberOfLines={2}>{item.titre}</Text>
-        <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>
-      </View>
+      <LinearGradient
+        colors={['#FFFFFF', '#F8FAFD']}
+        style={styles.cardGradient}
+      >
+        {item.photo ? (
+          <Image
+            source={{ uri: item.photo.startsWith('http') ? item.photo : `${API_URL}/uploads/${item.photo}` }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.placeholderImage}>
+            <Text style={styles.placeholderText}>Pas d'image</Text>
+          </View>
+        )}
+        <View style={styles.textContainer}>
+          <Text style={styles.title} numberOfLines={2}>{item.titre}</Text>
+          <Text style={styles.desc} numberOfLines={3}>{item.description}</Text>
+        </View>
+      </LinearGradient>
     </TouchableOpacity>
   );
 
-  if (loading) return <ActivityIndicator size="large" color="#1D2D51" style={{ marginTop: 40 }} />;
-  if (!actualites.length) return <Text style={styles.empty}>Aucune actualité à afficher.</Text>;
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1D2D51" />
+        <Text style={styles.loadingText}>Chargement des actualités...</Text>
+      </View>
+    );
+  }
+
+  if (!actualites.length) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.empty}>Aucune actualité à afficher.</Text>
+      </View>
+    );
+  }
 
   return (
     <FlatList
@@ -60,55 +84,96 @@ const ActualitesScreen = () => {
       renderItem={renderItem}
       keyExtractor={item => item._id || item.id}
       contentContainerStyle={styles.list}
+      showsVerticalScrollIndicator={false}
     />
   );
 };
 
 const styles = StyleSheet.create({
   list: {
-    padding: 16,
+    padding: 20,
     backgroundColor: '#F5F7FB',
+    flexGrow: 1,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    marginBottom: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    maxWidth: width - 40,
+    alignSelf: 'center',
+  },
+  cardGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 1,
-    minHeight: 80,
-    maxWidth: width - 32,
+    padding: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   image: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
+    width: 80,
+    height: 80,
+    borderRadius: 10,
     marginRight: 12,
-    backgroundColor: '#eee',
+    backgroundColor: '#E8ECEF',
+  },
+  placeholderImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginRight: 12,
+    backgroundColor: '#E8ECEF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 12,
+    color: '#666',
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
   },
   textContainer: {
     flex: 1,
     justifyContent: 'center',
   },
   title: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1D2D51',
-    marginBottom: 2,
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
   },
   desc: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#333',
+    lineHeight: 20,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FB',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#1D2D51',
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FB',
   },
   empty: {
+    fontSize: 18,
     color: '#1D2D51',
     textAlign: 'center',
-    marginTop: 40,
-    fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
   },
 });
 

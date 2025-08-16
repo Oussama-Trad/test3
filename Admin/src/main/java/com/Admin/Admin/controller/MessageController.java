@@ -20,6 +20,8 @@ import org.bson.Document;
 @RequestMapping("/messages")
 public class MessageController {
     @Autowired
+    private MessageService messageService;
+    @Autowired
     private org.springframework.data.mongodb.core.MongoTemplate mongoTemplate;
 
     @Autowired
@@ -29,8 +31,7 @@ public class MessageController {
     @Autowired
     private SuperAdminRepository superAdminRepository;
 
-    @Autowired
-    private MessageService messageService;
+
 
     @Autowired
     private LocationRepository locationRepository;
@@ -52,13 +53,14 @@ public class MessageController {
         String departement = isSuperAdmin ? null : (admin != null ? admin.getDepartement() : null);
         if (adminId == null) return "redirect:/login";
 
-        List<Document> convDocs = messageService.getConversationsForAdmin(adminId, location, departement, isSuperAdmin);
-        System.out.println("[DEBUG] convDocs size: " + (convDocs != null ? convDocs.size() : "null"));
-        if (convDocs != null) {
-            for (Document d : convDocs) {
-                System.out.println("[DEBUG] convDoc: " + d.toJson());
-            }
+
+    List<Document> convDocs = messageService.getConversationsForAdmin(adminId, location, departement, isSuperAdmin);
+    System.out.println("[DEBUG] convDocs size: " + (convDocs != null ? convDocs.size() : "null"));
+    if (convDocs != null) {
+        for (Document d : convDocs) {
+            System.out.println("[DEBUG] convDoc: " + d.toJson());
         }
+    }
 
         // LOG: Afficher tous les employés (id et _id)
         List<Employee> allEmployees = mongoTemplate.findAll(Employee.class);
@@ -69,7 +71,8 @@ public class MessageController {
 
         List<Map<String, Object>> conversations = new ArrayList<>();
         for (Document doc : convDocs) {
-            String employeeId = doc.getString("_id");
+            Object employeeIdObj = doc.get("_id");
+            String employeeId = (employeeIdObj != null) ? employeeIdObj.toString() : null;
             System.out.println("[DEBUG] Looking up employee for id: " + employeeId);
             Employee employee = null;
             // 1. Recherche par champ 'id' (court)

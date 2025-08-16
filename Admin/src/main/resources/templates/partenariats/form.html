@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${partenariat.id} != null ? 'Modifier' : 'Créer'">Partenariat</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <h1 th:text="${partenariat.id} != null ? 'Modifier le partenariat' : 'Créer un partenariat'"></h1>
+    <form th:action="${partenariat.id} != null ? @{'/partenariats/edit/' + ${partenariat.id}} : @{/partenariats/create}" method="post">
+        <label>Titre :</label>
+        <input type="text" name="titre" th:value="${partenariat.titre}" required/><br/>
+        <label>Description :</label>
+        <textarea name="description" required th:text="${partenariat.description}"></textarea><br/>
+        <label>Type :</label>
+        <select name="type" th:value="${partenariat.type}">
+            <option value="formation" th:selected="${partenariat.type == 'formation'}">Formation</option>
+            <option value="loisirs" th:selected="${partenariat.type == 'loisirs'}">Loisirs</option>
+            <option value="offres spéciales" th:selected="${partenariat.type == 'offres spéciales'}">Offres spéciales</option>
+        </select><br/>
+    <label>Image/Logo :</label>
+    <input type="file" name="imageFile" accept="image/*"/><br/>
+        <button type="submit">Enregistrer</button>
+        <a th:href="@{/partenariats}">Annuler</a>
+    </form>
+</body>
+</html>

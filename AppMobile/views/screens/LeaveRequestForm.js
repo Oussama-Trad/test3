@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, SafeAreaView, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { LinearGradient } from 'expo-linear-gradient';
 import { UserContext } from '../../context/UserContext';
 
 const LeaveRequestForm = ({ navigation }) => {
@@ -29,7 +30,7 @@ const LeaveRequestForm = ({ navigation }) => {
           type,
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
-        })
+        }),
       });
       if (res.ok) {
         Alert.alert('Succès', 'Demande envoyée !');
@@ -45,36 +46,152 @@ const LeaveRequestForm = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>Type de congé</Text>
-      <TextInput style={styles.input} value={type} onChangeText={setType} placeholder="Type (ex: annuel)" />
-      <Text style={styles.label}>Date de début</Text>
-      <TouchableOpacity onPress={() => setShowStart(true)} style={styles.dateBtn}>
-        <Text>{startDate.toLocaleDateString()}</Text>
-      </TouchableOpacity>
-      {showStart && (
-        <DateTimePicker value={startDate} mode="date" display="default" onChange={(e, d) => { setShowStart(false); if (d) setStartDate(d); }} />
-      )}
-      <Text style={styles.label}>Date de fin</Text>
-      <TouchableOpacity onPress={() => setShowEnd(true)} style={styles.dateBtn}>
-        <Text>{endDate.toLocaleDateString()}</Text>
-      </TouchableOpacity>
-      {showEnd && (
-        <DateTimePicker value={endDate} mode="date" display="default" onChange={(e, d) => { setShowEnd(false); if (d) setEndDate(d); }} />
-      )}
-      <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading}>
-        <Text style={{ color: '#fff', fontWeight: 'bold' }}>{loading ? 'Envoi...' : 'Envoyer'}</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={['#F5F7FA', '#E9EDF0']} style={styles.container}>
+        <View style={styles.card}>
+          <Text style={styles.title}>Demande de congé</Text>
+          <Text style={styles.label}>Type de congé</Text>
+          <TextInput
+            style={styles.input}
+            value={type}
+            onChangeText={setType}
+            placeholder="Type (ex: annuel)"
+            placeholderTextColor="#888"
+          />
+          <Text style={styles.label}>Date de début</Text>
+          <TouchableOpacity onPress={() => setShowStart(true)} style={styles.dateBtn}>
+            <Text style={styles.dateText}>{startDate.toLocaleDateString('fr-FR', { dateStyle: 'medium' })}</Text>
+          </TouchableOpacity>
+          {showStart && (
+            <DateTimePicker
+              value={startDate}
+              mode="date"
+              display="default"
+              onChange={(e, d) => {
+                setShowStart(false);
+                if (d) setStartDate(d);
+              }}
+            />
+          )}
+          <Text style={styles.label}>Date de fin</Text>
+          <TouchableOpacity onPress={() => setShowEnd(true)} style={styles.dateBtn}>
+            <Text style={styles.dateText}>{endDate.toLocaleDateString('fr-FR', { dateStyle: 'medium' })}</Text>
+          </TouchableOpacity>
+          {showEnd && (
+            <DateTimePicker
+              value={endDate}
+              mode="date"
+              display="default"
+              onChange={(e, d) => {
+                setShowEnd(false);
+                if (d) setEndDate(d);
+              }}
+            />
+          )}
+          <TouchableOpacity
+            style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+            onPress={handleSubmit}
+            disabled={loading}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.submitBtnText}>{loading ? 'Envoi...' : 'Envoyer'}</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, backgroundColor: '#f5f7fa' },
-  label: { fontWeight: 'bold', marginTop: 16 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 8, marginTop: 8 },
-  dateBtn: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginTop: 8, backgroundColor: '#fff' },
-  submitBtn: { backgroundColor: '#007bff', borderRadius: 8, padding: 16, alignItems: 'center', marginTop: 32 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F5F7FA',
+  },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '90%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    marginVertical: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1D2D51',
+    marginBottom: 20,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+    textAlign: 'center',
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1D2D51',
+    marginTop: 16,
+    marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#DDE1E6',
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: '#F8FAFD',
+    fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+    color: '#1D2D51',
+  },
+  dateBtn: {
+    borderWidth: 1,
+    borderColor: '#DDE1E6',
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: '#F8FAFD',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#1D2D51',
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+  },
+  submitBtn: {
+    backgroundColor: '#4f8cff',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    marginTop: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  submitBtnDisabled: {
+    backgroundColor: '#A3BFFA',
+    shadowOpacity: 0.1,
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+  },
 });
 
 export default LeaveRequestForm;

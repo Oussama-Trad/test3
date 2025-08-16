@@ -1,184 +1,192 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getDocumentTypes, createDocumentRequest, getDocumentRequests } from '../../services/api/documentApi';
+import React, { useEffect, useState, useContext } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, SafeAreaView, Platform, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { UserContext } from '../../context/UserContext';
 
-const DocumentScreen = () => {
-  const [documentTypes, setDocumentTypes] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [selectedType, setSelectedType] = useState(null);
-  const [commentaire, setCommentaire] = useState('');
-  const [loading, setLoading] = useState(false);
+const { width } = Dimensions.get('window');
 
-  const fetchData = async () => {
-    const token = await AsyncStorage.getItem('token');
-    const typesRes = await getDocumentTypes(token);
-    setDocumentTypes(typesRes.documentTypes || []);
-    const reqRes = await getDocumentRequests(token);
-    setRequests(reqRes.requests || []);
-  };
+const DocumentScreen = ({ navigation }) => {
+  const { user } = useContext(UserContext);
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    fetchConversations();
+    const interval = setInterval(fetchConversations, 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleRequest = async () => {
-    if (!selectedType) {
-      Alert.alert('Erreur', 'Veuillez sélectionner un type de document.');
-      return;
-    }
+  const fetchConversations = async () => {
     setLoading(true);
-    const token = await AsyncStorage.getItem('token');
-    const res = await createDocumentRequest(token, {
-      documentTypeId: selectedType.id,
-      commentaire
-    });
-    setLoading(false);
-    if (res && res.message === 'Demande créée') {
-      Alert.alert('Succès', 'Votre demande a été envoyée.');
-      setCommentaire('');
-      setSelectedType(null);
-      fetchData();
-    } else {
-      Alert.alert('Erreur', res.message || 'Erreur lors de la demande');
+    try {
+      const res = await fetch(`http://localhost:5000/api/conversations?employeeId=${user.id}`);
+      const data = await res.json();
+      setConversations(data);
+    } catch (e) {
+      setConversations([]);
     }
+    setLoading(false);
   };
 
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => navigation.navigate('ChatConversation', { admin: item.admin })}
+      activeOpacity={0.7}
+    >
+      <LinearGradient
+        colors={['#FFFFFF', '#F9FBFC']}
+        style={styles.itemGradient}
+      >
+        <View style={styles.itemContent}>
+          <Text style={styles.name}>{item.admin.nom} {item.admin.prenom}</Text>
+          <Text style={styles.info} numberOfLines={1}>Dernier message : {item.lastMessage}</Text>
+          <Text style={styles.date}>Date : {new Date(item.lastDate).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}</Text>
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Demander un document</Text>
-      <FlatList
-        data={documentTypes}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient
+        colors={['#F5F7FB', '#E9EDF0']}
+        style={styles.header}
+      >
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>Mes documents</Text>
           <TouchableOpacity
-            style={[styles.typeItem, selectedType && selectedType.id === item.id && styles.selectedType]}
-            onPress={() => setSelectedType(item)}>
-            <Text style={styles.typeTitle}>{item.titre}</Text>
-            <Text style={styles.typeDesc}>{item.description}</Text>
+            style={styles.newMsgBtn}
+            onPress={() => navigation.navigate('ChatService')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.newMsgBtnText}>Demander un document</Text>
           </TouchableOpacity>
-        )}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ marginBottom: 10 }}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Commentaire (optionnel)"
-        value={commentaire}
-        onChangeText={setCommentaire}
-      />
-      <TouchableOpacity style={styles.button} onPress={handleRequest} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Envoi...' : 'Faire la demande'}</Text>
-      </TouchableOpacity>
-      <Text style={styles.subtitle}>Mes demandes</Text>
-      <FlatList
-        data={requests}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.requestItem}>
-            <Text style={styles.reqType}>{item.documentTypeId}</Text>
-            <Text style={styles.reqStatus}>Statut : {item.status}</Text>
-            <Text style={styles.reqDate}>Date : {new Date(item.createdAt).toLocaleString()}</Text>
-            {item.commentaire ? <Text style={styles.reqComment}>Commentaire : {item.commentaire}</Text> : null}
-          </View>
-        )}
-        ListEmptyComponent={<Text style={{ color: '#1D2D51', marginTop: 10 }}>Aucune demande pour l'instant.</Text>}
-      />
-    </View>
+        </View>
+      </LinearGradient>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1D2D51" />
+          <Text style={styles.loadingText}>Chargement...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={conversations}
+          keyExtractor={item => item.admin._id}
+          renderItem={renderItem}
+          ListEmptyComponent={<Text style={styles.empty}>Aucune conversation trouvée</Text>}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#f5f6fa',
-    padding: 16,
+    backgroundColor: '#F5F7FB',
+  },
+  header: {
+    padding: 20,
+    paddingTop: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   title: {
+    fontSize: 28,
+    fontWeight: '700',
     color: '#1D2D51',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
   },
-  subtitle: {
-    color: '#1D2D51',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 8,
+  newMsgBtn: {
+    backgroundColor: '#4f8cff',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 4,
   },
-  typeItem: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 16,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#1D2D51',
-    minWidth: 180,
-  },
-  selectedType: {
-    backgroundColor: '#1D2D51',
-  },
-  typeTitle: {
-    color: '#1D2D51',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  typeDesc: {
-    color: '#1D2D51',
-    fontSize: 13,
-    marginTop: 4,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#1D2D51',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: '#fff',
-    color: '#1D2D51',
-  },
-  button: {
-    backgroundColor: '#1D2D51',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  buttonText: {
+  newMsgBtnText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
   },
-  requestItem: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#1D2D51',
+  list: {
+    flexGrow: 1,
+    padding: 20,
+    paddingBottom: 20,
   },
-  reqType: {
+  item: {
+    marginBottom: 12,
+    borderRadius: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+    elevation: 3,
+    maxWidth: width - 40,
+    alignSelf: 'center',
+  },
+  itemGradient: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  itemContent: {
+    padding: 16,
+    backgroundColor: 'transparent',
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1D2D51',
-    fontWeight: 'bold',
-    fontSize: 15,
+    marginBottom: 6,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
   },
-  reqStatus: {
-    color: '#1D2D51',
+  info: {
     fontSize: 14,
-    marginTop: 2,
+    color: '#555',
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+    lineHeight: 20,
   },
-  reqDate: {
-    color: '#1D2D51',
-    fontSize: 13,
-    marginTop: 2,
+  date: {
+    fontSize: 12,
+    color: '#888',
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+    marginTop: 6,
+    textAlign: 'right',
   },
-  reqComment: {
+  empty: {
+    fontSize: 16,
     color: '#1D2D51',
-    fontSize: 13,
-    marginTop: 2,
-    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 40,
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FB',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#1D2D51',
+    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
   },
 });
 
