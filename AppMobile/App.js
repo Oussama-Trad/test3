@@ -1,3 +1,5 @@
+import LeaveRequestScreen from './screens/LeaveRequestScreen';
+import MyLeavesScreen from './screens/MyLeavesScreen';
 import { Ionicons } from '@expo/vector-icons';
 import SplashScreen from './views/screens/SplashScreen';
 import AuthScreen from './views/screens/AuthScreen';
@@ -41,6 +43,7 @@ function MainTabs() {
           else if (route.name === 'Documents') iconName = 'document';
           else if (route.name === 'Mon Profil') iconName = 'person';
           else if (route.name === 'Messagerie') iconName = 'chatbubble';
+      else if (route.name === 'Congés') iconName = 'calendar';
           else iconName = 'home';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -54,6 +57,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Actualités" component={ActualitesScreen} />
       <Tab.Screen name="Documents" component={DocumentScreen} />
+    <Tab.Screen name="Congés" component={MyLeavesScreen} />
       <Tab.Screen name="Mon Profil" component={ProfileScreen} />
   <Tab.Screen name="Messagerie" component={ConversationsScreen} />
     <Tab.Screen name="Événements" component={EventsScreen} />
@@ -76,6 +80,7 @@ export default function App() {
       <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: 'Détail événement' }} />
           <Stack.Screen name="ChatService" component={ChatServiceScreen} options={{ headerShown: true, title: 'Chat avec Service' }} />
           <Stack.Screen name="ChatConversation" component={ChatConversation} options={{ headerShown: true, title: 'Conversation' }} />
+            <Stack.Screen name="LeaveRequest" component={LeaveRequestScreen} options={{ headerShown: true, title: 'Demande de congé' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>

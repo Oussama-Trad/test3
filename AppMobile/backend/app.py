@@ -1,4 +1,5 @@
 
+
 # --- APP INIT ---
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -10,143 +11,74 @@ import os
 from functools import wraps
 from pymongo import MongoClient
 from extensions import db, employee_collection, location_collection, departement_collection
-from pymongo import MongoClient
-
-# Connexion à la collection messages
-client = MongoClient('mongodb+srv://oussamatrzd19:oussama123@leoniapp.grhnzgz.mongodb.net/')
-db = client['DBLEONI']
-messages_collection = db['messages']
 from events_api import bp_events
 from auth_utils import token_required
 from documents import bp as documents_bp
 from actualites import bp as actualites_bp
 
-# --- APP INIT ---
+# Connexion à la collection messages
+client = MongoClient('mongodb+srv://oussamatrzd19:oussama123@leoniapp.grhnzgz.mongodb.net/')
+db = client['DBLEONI']
+messages_collection = db['messages']
+
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+CORS(app, resources={r"/*": {
+    "origins": ["http://localhost:8081", "http://localhost:19006", "*"],
+    "allow_headers": "*",
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}}, supports_credentials=True)
 app.config['SECRET_KEY'] = '123'  # JWT_SECRET_KEY
 
 # --- BLUEPRINTS ---
 app.register_blueprint(documents_bp)
 app.register_blueprint(actualites_bp)
 app.register_blueprint(bp_events)
+
 
 # Nouvelle route pour lister les conversations d'un employé (mobile)
+@app.route('/api/leave-requests', methods=['POST'])
+def create_leave_request():
+    data = request.get_json()
+    required_fields = ['employeeId', 'employeeNom', 'employeePrenom', 'locationId', 'departementId', 'type', 'startDate', 'endDate']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({'error': f'Missing field: {field}'}), 400
+    leave = {
+        'employeeId': data['employeeId'],
+        'employeeNom': data['employeeNom'],
+        'employeePrenom': data['employeePrenom'],
+        'locationId': data['locationId'],
+        'locationNom': data.get('locationNom', ''),
+        'departementId': data['departementId'],
+        'departementNom': data.get('departementNom', ''),
+        'type': data['type'],
+        'startDate': data['startDate'],
+        'endDate': data['endDate'],
+        'status': 'En attente',
+        'createdAt': datetime.utcnow(),
+        'updatedAt': datetime.utcnow(),
+    }
+    result = db.leaveRequests.insert_one(leave)
+    leave['_id'] = str(result.inserted_id)
+    return jsonify(leave), 201
 
-@app.route('/api/conversations', methods=['GET'])
-def get_employee_conversations():
-    print("[DEBUG] /api/conversations route CALLED")
-    try:
-        employee_id = request.args.get('employeeId')
-        print(f"[DEBUG] employeeId param: {employee_id}")
-        if not employee_id:
-            print("[DEBUG] Pas d'employeeId fourni")
-            return jsonify([])
-        # Chercher l'employé pour récupérer son _id (ObjectId) et son id (string)
-        employee = db.employee.find_one({'id': employee_id})
-        print(f"[DEBUG] employee query result: {employee}")
-        employee_object_id = None
-        if employee:
-            employee_object_id = str(employee.get('_id'))
-            print(f"[DEBUG] Employé trouvé: id={employee_id}, _id={employee_object_id}")
-        else:
-            print(f"[DEBUG] Aucun employé trouvé avec id={employee_id}")
-        # Récupérer tous les messages où l'employé est sender ou receiver (par id ou _id)
-        or_conditions = [
-            {'sender_id': employee_id},
-            {'receiver_id': employee_id}
-        ]
-        if employee_object_id:
-            or_conditions.append({'sender_id': employee_object_id})
-            or_conditions.append({'receiver_id': employee_object_id})
-        print(f"[DEBUG] or_conditions for messages: {or_conditions}")
-        messages = list(db.messages.find({
-            '$or': or_conditions
-        }).sort('timestamp', -1))
-        print(f"[DEBUG] Messages trouvés pour employé {employee_id} (ou _id {employee_object_id}): {len(messages)}")
-        for m in messages:
-            print(f"[DEBUG] Message: sender_id={m.get('sender_id')} receiver_id={m.get('receiver_id')} content={m.get('content')}")
-        # Regrouper par admin contacté
-        conversations = {}
-        for msg in messages:
-            # L'autre participant
-            if msg['sender_id'] == employee_id:
-                admin_id = msg['receiver_id']
-            else:
-                admin_id = msg['sender_id']
-            print(f"[DEBUG] Recherche admin pour admin_id={admin_id}")
-            admin = None
-            from bson import ObjectId
-            # Essayer par _id (ObjectId)
-            try:
-                admin = db.admin.find_one({'_id': ObjectId(admin_id)})
-                if not admin:
-                    admin = db.superadmin.find_one({'_id': ObjectId(admin_id)})
-            except Exception as e:
-                print(f"[DEBUG] Exception ObjectId: {e}")
-            # Essayer par _id (string)
-            if not admin:
-                admin = db.admin.find_one({'_id': admin_id})
-                if not admin:
-                    admin = db.superadmin.find_one({'_id': admin_id})
-            # Essayer par id personnalisé (champ 'id')
-            if not admin:
-                admin = db.admin.find_one({'id': admin_id})
-                if not admin:
-                    admin = db.superadmin.find_one({'id': admin_id})
-            print(f"[DEBUG] Résultat admin trouvé: {admin}")
-            if not admin:
-                continue
-            if admin_id not in conversations:
-                conversations[admin_id] = {
-                    'admin': {
-                        '_id': str(admin_id),
-                        'nom': admin.get('nom', ''),
-                        'prenom': admin.get('prenom', ''),
-                        'locationId': str(admin.get('location', '')),
-                        'departementId': str(admin.get('departement', '')),
-                    },
-                    'lastMessage': msg.get('content', msg.get('message', '')),
-                    'lastDate': msg.get('timestamp')
-                }
-        print(f"[DEBUG] Conversations trouvées: {len(conversations)}")
-        return jsonify(list(conversations.values()))
-    except Exception as e:
-        print(f"[DEBUG] Exception dans /api/conversations: {e}")
-        return jsonify({'error': str(e)}), 500
+@app.route('/api/leave-requests', methods=['GET'])
+def get_leave_requests():
+    employee_id = request.args.get('employeeId')
+    query = {}
+    if employee_id:
+        query['employeeId'] = employee_id
+    leaves = list(db.leaveRequests.find(query).sort('createdAt', -1))
+    for l in leaves:
+        l['_id'] = str(l['_id'])
+    return jsonify(leaves)
 
 
-# --- IMPORTS EN HAUT DU FICHIER ---
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from werkzeug.security import check_password_hash
-from datetime import datetime, timedelta
-from bson import ObjectId
-import jwt
-import os
-from functools import wraps
-from pymongo import MongoClient
-from extensions import db, employee_collection, location_collection, departement_collection
-from pymongo import MongoClient
+# ...existing code...
 
-# Connexion à la collection messages
-client = MongoClient('mongodb+srv://oussamatrzd19:oussama123@leoniapp.grhnzgz.mongodb.net/')
-db = client['DBLEONI']
-messages_collection = db['messages']
-from events_api import bp_events
-from auth_utils import token_required
-from documents import bp as documents_bp
-from actualites import bp as actualites_bp
 
-# --- APP INIT ---
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-app.config['SECRET_KEY'] = '123'  # JWT_SECRET_KEY
 
-# --- BLUEPRINTS ---
-app.register_blueprint(documents_bp)
-app.register_blueprint(actualites_bp)
-app.register_blueprint(bp_events)
+# ...existing code...
 
 # --- ENDPOINT ADMINS ---
 @app.route('/api/admins', methods=['GET'])
