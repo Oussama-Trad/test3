@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des demandes de congé</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <h1>Gestion des demandes de congé</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Employé</th>
+                <th>Type</th>
+                <th>Début</th>
+                <th>Fin</th>
+                <th>Lieu</th>
+                <th>Département</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        <tr th:each="req : ${requests}">
+            <td th:text="${employeeMap[req.employeeId]} ?: req.employeeNom + ' ' + req.employeePrenom">Nom Employé</td>
+            <td th:text="${req.type}">Type</td>
+            <td th:text="${req.startDate}">Début</td>
+            <td th:text="${req.endDate}">Fin</td>
+            <td th:text="${locationMap[req.locationId]} ?: req.locationNom">Lieu</td>
+            <td th:text="${departementMap[req.departementId]} ?: req.departementNom">Département</td>
+            <td th:text="${req.status}">Statut</td>
+            <td>
+                <form th:action="@{'/leave-requests/update-status/' + ${req.id}}" method="post" style="display:inline">
+                    <select name="status">
+                        <option th:selected="${req.status == 'En attente'}">En attente</option>
+                        <option th:selected="${req.status == 'En cours'}">En cours</option>
+                        <option th:selected="${req.status == 'Accepté'}">Accepté</option>
+                        <option th:selected="${req.status == 'Refusé'}">Refusé</option>
+                    </select>
+                    <button type="submit">Changer</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</body>
+</html>
