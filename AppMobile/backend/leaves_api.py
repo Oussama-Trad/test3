@@ -1,6 +1,5 @@
 
-
-print('[DEBUG] leaves_api.py loaded')
+print('[DEBUG] leave_requests_routes.py loaded')
 
 from flask import Blueprint, request, jsonify
 from flask_cors import cross_origin
@@ -9,14 +8,8 @@ from extensions import db, employee_collection, location_collection, departement
 
 leave_requests_api_bp = Blueprint('leave_requests_api', __name__, url_prefix='')
 
-# --- ROUTE DE TEST ---
-@leave_requests_api_bp.route('/api/leave-test', methods=['GET'])
-def leave_test():
-    print('[DEBUG] /api/leave-test called')
-    return jsonify({'ok': True, 'msg': 'leave blueprint works'})
-
 # --- LEAVE REQUESTS API ---
-@leave_requests_api_bp.route('/api/leave-requests', methods=['POST'])
+@leave_requests_api_bp.route('/api/leave-requests', methods=['POST', 'OPTIONS'])
 @cross_origin()
 def create_leave_request():
     print("[DEBUG] POST /api/leave-requests called")
@@ -52,7 +45,7 @@ def create_leave_request():
     return jsonify(leave), 201
 
 # Liste des demandes d’un employé
-@leave_requests_api_bp.route('/api/leave-requests', methods=['GET'])
+@leave_requests_api_bp.route('/api/leave-requests', methods=['GET', 'OPTIONS'])
 @cross_origin()
 def list_leave_requests():
     print("[DEBUG] GET /api/leave-requests called")

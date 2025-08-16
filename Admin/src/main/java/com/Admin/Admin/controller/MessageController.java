@@ -190,19 +190,14 @@ public class MessageController {
     @PostMapping("/{employeeId}")
 
     public String sendMessage(@PathVariable String employeeId, @RequestParam String content, HttpSession session) {
-        try {
-            Object user = session.getAttribute("user");
-            String role = (String) session.getAttribute("role");
-            Admin admin = (role != null && role.equals("admin")) ? (Admin) user : null;
-            SuperAdmin superAdmin = (role != null && role.equals("superadmin")) ? (SuperAdmin) user : null;
-            String adminId = (superAdmin != null) ? superAdmin.getId() : (admin != null ? admin.getId() : null);
-            if (adminId == null) return "redirect:/login";
-            messageService.sendMessage(adminId, employeeId, content);
-            return "redirect:/messages/" + employeeId;
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("[ERROR] sendMessage: " + e.getMessage());
-            return "error/500";
-        }
+
+    Object user = session.getAttribute("user");
+    String role = (String) session.getAttribute("role");
+    Admin admin = (role != null && role.equals("admin")) ? (Admin) user : null;
+    SuperAdmin superAdmin = (role != null && role.equals("superadmin")) ? (SuperAdmin) user : null;
+    String adminId = (superAdmin != null) ? superAdmin.getId() : (admin != null ? admin.getId() : null);
+    if (adminId == null) return "redirect:/login";
+    messageService.sendMessage(adminId, employeeId, content);
+    return "redirect:/messages/" + employeeId;
     }
 }

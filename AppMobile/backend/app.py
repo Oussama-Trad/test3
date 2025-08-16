@@ -31,8 +31,6 @@ app.register_blueprint(documents_bp)
 app.register_blueprint(actualites_bp)
 app.register_blueprint(bp_events)
 
-
-
 # Nouvelle route pour lister les conversations d'un employé (mobile)
 
 @app.route('/api/conversations', methods=['GET'])
@@ -529,19 +527,6 @@ def get_employee_conversations():
     except Exception as e:
         print(f"[DEBUG] Exception dans /api/conversations: {e}")
         return jsonify({'error': str(e)}), 500
-
-@app.route('/api/native-test')
-def native_test():
-    return 'native ok'
-    
-
-# --- IMPORT ET ENREGISTREMENT DU BLUEPRINT EN BAS ---
-from leaves_api import leave_requests_api_bp
-app.register_blueprint(leave_requests_api_bp)
-print('[DEBUG] leave_requests_api_bp blueprint registered (BOTTOM)')
-print('[DEBUG] Liste des routes Flask:')
-for rule in app.url_map.iter_rules():
-    print(f"[DEBUG] {rule}")
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

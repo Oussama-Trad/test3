@@ -52,12 +52,11 @@ function MainTabs() {
         tabBarStyle: { backgroundColor: '#fff' },
       })}
     >
-  <Tab.Screen name="Actualités" component={ActualitesScreen} />
-  <Tab.Screen name="Documents" component={DocumentScreen} />
-  <Tab.Screen name="Congés" component={require('./views/screens/MyLeavesScreen').default} />
-  <Tab.Screen name="Mon Profil" component={ProfileScreen} />
+      <Tab.Screen name="Actualités" component={ActualitesScreen} />
+      <Tab.Screen name="Documents" component={DocumentScreen} />
+      <Tab.Screen name="Mon Profil" component={ProfileScreen} />
   <Tab.Screen name="Messagerie" component={ConversationsScreen} />
-  <Tab.Screen name="Événements" component={EventsScreen} />
+    <Tab.Screen name="Événements" component={EventsScreen} />
     </Tab.Navigator>
   );
 }
@@ -74,10 +73,9 @@ export default function App() {
           <Stack.Screen name="MainTabs" component={MainTabs} />
           <Stack.Screen name="ActualiteDetail" component={require('./views/screens/ActualiteDetailScreen').default} options={{ headerShown: true, title: 'Détail actualité' }} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-          <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: 'Détail événement' }} />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} options={{ title: 'Détail événement' }} />
           <Stack.Screen name="ChatService" component={ChatServiceScreen} options={{ headerShown: true, title: 'Chat avec Service' }} />
           <Stack.Screen name="ChatConversation" component={ChatConversation} options={{ headerShown: true, title: 'Conversation' }} />
-          <Stack.Screen name="LeaveRequestForm" component={require('./views/screens/LeaveRequestForm').default} options={{ headerShown: true, title: 'Nouvelle demande de congé' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>

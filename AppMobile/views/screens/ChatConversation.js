@@ -50,13 +50,21 @@ const ChatConversation = ({ route }) => {
   };
 
   const renderItem = ({ item }) => {
-    // Prend en compte senderId ou sender_id
-    const sender = item.senderId || item.sender_id;
+    // Supporte senderId ou sender_id
+    const sender = item.senderId !== undefined ? item.senderId : item.sender_id;
     const isMine = sender === CURRENT_USER_ID;
     return (
-      <View style={[styles.messageContainer, isMine ? styles.myMessage : styles.theirMessage]}>
-        <Text style={styles.messageText}>{item.content || item.message}</Text>
-        <Text style={styles.timestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
+      <View style={[styles.messageRow, isMine ? { justifyContent: 'flex-end' } : { justifyContent: 'flex-start' }]}> 
+        {!isMine && (
+          <View style={styles.avatar}><Text style={styles.avatarText}>{admin.prenom?.[0] || 'A'}</Text></View>
+        )}
+        <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
+          <Text style={[styles.messageText, isMine ? styles.textMine : styles.textTheirs]}>{item.content || item.message}</Text>
+          <Text style={[styles.timestamp, isMine ? styles.timestampMine : styles.timestampTheirs]}>{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+        </View>
+        {isMine && (
+          <View style={styles.avatarSelf}><Text style={styles.avatarText}>{user?.prenom?.[0] || 'M'}</Text></View>
+        )}
       </View>
     );
   };
@@ -65,7 +73,11 @@ const ChatConversation = ({ route }) => {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{admin.nom} {admin.prenom}</Text>
-        <Text style={styles.headerInfo}>Location: {admin.locationId} | Département: {admin.departementId}</Text>
+        <Text style={styles.headerInfo}>
+          {admin.locationId ? `Location: ${admin.locationId}` : ''}
+          {admin.locationId && admin.departementId ? ' | ' : ''}
+          {admin.departementId ? `Département: ${admin.departementId}` : ''}
+        </Text>
       </View>
       {loading ? <ActivityIndicator size="large" /> : (
         <FlatList
@@ -96,11 +108,19 @@ const styles = StyleSheet.create({
   header: { padding: 16, backgroundColor: '#f5f5f5', borderBottomWidth: 1, borderBottomColor: '#eee' },
   headerTitle: { fontSize: 20, fontWeight: 'bold' },
   headerInfo: { color: '#555', marginTop: 4 },
-  messageContainer: { marginBottom: 12, padding: 10, borderRadius: 8, maxWidth: '80%' },
-  myMessage: { alignSelf: 'flex-end', backgroundColor: '#d1e7dd' },
-  theirMessage: { alignSelf: 'flex-start', backgroundColor: '#f8d7da' },
+  messageRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 10, paddingHorizontal: 4 },
+  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#4f8cff', alignItems: 'center', justifyContent: 'center', marginRight: 8 },
+  avatarSelf: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#00b894', alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
+  avatarText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  bubble: { maxWidth: '70%', padding: 12, borderRadius: 18, minWidth: 60 },
+  bubbleMine: { backgroundColor: '#4f8cff', alignSelf: 'flex-end', borderBottomRightRadius: 4 },
+  bubbleTheirs: { backgroundColor: '#e3e9f7', alignSelf: 'flex-start', borderBottomLeftRadius: 4 },
   messageText: { fontSize: 16 },
-  timestamp: { fontSize: 10, color: '#888', marginTop: 4, textAlign: 'right' },
+  textMine: { color: '#fff' },
+  textTheirs: { color: '#222' },
+  timestamp: { fontSize: 10, marginTop: 4, textAlign: 'right' },
+  timestampMine: { color: '#cce0ff' },
+  timestampTheirs: { color: '#888' },
   inputContainer: { flexDirection: 'row', padding: 8, borderTopWidth: 1, borderTopColor: '#eee', backgroundColor: '#fff' },
   input: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 8, marginRight: 8 },
   sendButton: { backgroundColor: '#007bff', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 16, justifyContent: 'center' },
