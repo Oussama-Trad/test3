@@ -1,27 +1,55 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Messagerie - Conversation</title>
+    <title>Messagerie - Discussion</title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
 </head>
-<body>
+<body class="chat-bg">
 <div th:replace="~{fragments/navbar :: sidebar}"></div>
-<div class="container">
-    <h2>Conversation avec <span th:text="${employee.nom}"></span> <span th:text="${employee.prenom}"></span></h2>
-    <div class="conversation-info">
-        <span th:text="'Location : ' + ${employee.locationId}"></span> |
-        <span th:text="'Département : ' + ${employee.departementId}"></span>
-    </div>
-    <div class="messages-list">
-        <div th:each="msg : ${messages}" th:classappend="${msg.senderType} == 'admin' ? 'admin-msg' : 'employee-msg'">
-            <div class="msg-content" th:text="${msg.content}"></div>
-            <div class="msg-date" th:text="${#dates.format(msg.timestamp, 'dd/MM/yyyy HH:mm')}"></div>
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="chat-header-avatar">
+            <span th:text="${employee != null ? employee.prenom?.substring(0,1) : (employeeSnapshot != null ? employeeSnapshot.prenom?.substring(0,1) : 'U')}"></span>
+        </div>
+        <div class="chat-header-info">
+            <div class="chat-header-title">
+                <span th:text="${employee != null ? employee.nom : (employeeSnapshot != null ? employeeSnapshot.nom : 'Employé inconnu')}"></span>
+                <span th:text="${employee != null ? employee.prenom : (employeeSnapshot != null ? employeeSnapshot.prenom : '')}"></span>
+            </div>
+            <div class="chat-header-meta">
+                <span th:text="'Location : ' + (${employee != null ? employee.locationId : (employeeSnapshot != null ? employeeSnapshot.locationId : '')})"></span>
+                <span> | </span>
+                <span th:text="'Département : ' + (${employee != null ? employee.departementId : (employeeSnapshot != null ? employeeSnapshot.departementId : '')})"></span>
+            </div>
         </div>
     </div>
-    <form th:action="@{'/messages/' + ${employee.id}}" method="post" class="send-form">
-        <input type="text" name="content" placeholder="Votre message..." required />
-        <button type="submit">Envoyer</button>
+    <div class="chat-messages" id="chat-messages">
+        <div th:each="msg : ${messages}" th:classappend="${msg.sender_id == adminId} ? 'chat-bubble chat-bubble-admin' : 'chat-bubble chat-bubble-employee'">
+            <div class="chat-bubble-row">
+                <div th:if="${msg.sender_id != adminId}" class="chat-bubble-avatar">
+                    <span th:text="${employee != null ? employee.prenom?.substring(0,1) : (employeeSnapshot != null ? employeeSnapshot.prenom?.substring(0,1) : 'U')}"></span>
+                </div>
+                <div class="chat-bubble-content">
+                    <div class="chat-bubble-text" th:text="${msg.content}"></div>
+                    <div class="chat-bubble-date" th:text="${#dates.format(msg.timestamp, 'dd/MM/yyyy HH:mm')}"></div>
+                </div>
+                <div th:if="${msg.sender_id == adminId}" class="chat-bubble-avatar chat-bubble-avatar-admin">
+                    <span>A</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <form th:action="@{'/messages/' + ${employee != null ? employee.id : (employeeSnapshot != null ? employeeSnapshot.id : '')}}" method="post" class="chat-input-form">
+        <input type="text" name="content" placeholder="Votre message..." required autocomplete="off" class="chat-input" />
+        <button type="submit" class="chat-send-btn">Envoyer</button>
     </form>
 </div>
+<script>
+// Scroll to bottom on load
+window.onload = function() {
+  var el = document.getElementById('chat-messages');
+  if (el) el.scrollTop = el.scrollHeight;
+}
+</script>
 </body>
 </html>

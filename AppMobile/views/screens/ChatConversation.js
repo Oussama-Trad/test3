@@ -49,12 +49,17 @@ const ChatConversation = ({ route }) => {
     } catch (e) {}
   };
 
-  const renderItem = ({ item }) => (
-    <View style={[styles.messageContainer, item.senderId === CURRENT_USER_ID ? styles.myMessage : styles.theirMessage]}>
-      <Text style={styles.messageText}>{item.content || item.message}</Text>
-      <Text style={styles.timestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
-    </View>
-  );
+  const renderItem = ({ item }) => {
+    // Prend en compte senderId ou sender_id
+    const sender = item.senderId || item.sender_id;
+    const isMine = sender === CURRENT_USER_ID;
+    return (
+      <View style={[styles.messageContainer, isMine ? styles.myMessage : styles.theirMessage]}>
+        <Text style={styles.messageText}>{item.content || item.message}</Text>
+        <Text style={styles.timestamp}>{new Date(item.timestamp).toLocaleString()}</Text>
+      </View>
+    );
+  };
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

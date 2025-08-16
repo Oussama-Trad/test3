@@ -152,37 +152,57 @@ public class MessageController {
 
     public String conversation(@PathVariable String employeeId, Model model, HttpSession session) {
 
-    Object user = session.getAttribute("user");
-    String role = (String) session.getAttribute("role");
-    Admin admin = (role != null && role.equals("admin")) ? (Admin) user : null;
-    SuperAdmin superAdmin = (role != null && role.equals("superadmin")) ? (SuperAdmin) user : null;
-    boolean isSuperAdmin = (superAdmin != null);
-    String adminId = isSuperAdmin ? superAdmin.getId() : (admin != null ? admin.getId() : null);
-    if (adminId == null) return "redirect:/login";
+        Object user = session.getAttribute("user");
+        String role = (String) session.getAttribute("role");
+        Admin admin = (role != null && role.equals("admin")) ? (Admin) user : null;
+        SuperAdmin superAdmin = (role != null && role.equals("superadmin")) ? (SuperAdmin) user : null;
+        boolean isSuperAdmin = (superAdmin != null);
+        String adminId = isSuperAdmin ? superAdmin.getId() : (admin != null ? admin.getId() : null);
+        if (adminId == null) return "redirect:/login";
 
         Employee employee = employeeRepository.findById(employeeId).orElse(null);
-        if (employee == null) return "redirect:/messages";
-
+        Map<String, Object> employeeSnapshot = null;
+        if (employee == null) {
+            // Chercher le snapshot dans la collection conversations
+            org.springframework.data.mongodb.core.query.Query convQuery = new org.springframework.data.mongodb.core.query.Query();
+            convQuery.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("participants").in(Arrays.asList(adminId, employeeId)));
+            Document conv = mongoTemplate.findOne(convQuery, Document.class, "conversations");
+            if (conv != null && conv.containsKey("employeeSnapshot")) {
+                Object snap = conv.get("employeeSnapshot");
+                if (snap instanceof Map) {
+                    employeeSnapshot = (Map<String, Object>) snap;
+                } else if (snap instanceof Document) {
+                    employeeSnapshot = ((Document) snap);
+                }
+            }
+        }
         // TODO: Vérifier les droits d'accès si admin normal
 
-        List<Document> messages = messageService.getMessagesWithEmployee(adminId, employeeId);
-        model.addAttribute("employee", employee);
-        model.addAttribute("messages", messages);
-        return "messages/conversation";
+    List<Document> messages = messageService.getMessagesWithEmployee(adminId, employeeId);
+    model.addAttribute("employee", employee);
+    model.addAttribute("employeeSnapshot", employeeSnapshot);
+    model.addAttribute("messages", messages);
+    model.addAttribute("adminId", adminId);
+    return "messages/conversation";
     }
 
     // Envoi d'un message (POST)
     @PostMapping("/{employeeId}")
 
     public String sendMessage(@PathVariable String employeeId, @RequestParam String content, HttpSession session) {
-
-    Object user = session.getAttribute("user");
-    String role = (String) session.getAttribute("role");
-    Admin admin = (role != null && role.equals("admin")) ? (Admin) user : null;
-    SuperAdmin superAdmin = (role != null && role.equals("superadmin")) ? (SuperAdmin) user : null;
-    String adminId = (superAdmin != null) ? superAdmin.getId() : (admin != null ? admin.getId() : null);
-    if (adminId == null) return "redirect:/login";
-    messageService.sendMessage(adminId, employeeId, content);
-    return "redirect:/messages/" + employeeId;
+        try {
+            Object user = session.getAttribute("user");
+            String role = (String) session.getAttribute("role");
+            Admin admin = (role != null && role.equals("admin")) ? (Admin) user : null;
+            SuperAdmin superAdmin = (role != null && role.equals("superadmin")) ? (SuperAdmin) user : null;
+            String adminId = (superAdmin != null) ? superAdmin.getId() : (admin != null ? admin.getId() : null);
+            if (adminId == null) return "redirect:/login";
+            messageService.sendMessage(adminId, employeeId, content);
+            return "redirect:/messages/" + employeeId;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("[ERROR] sendMessage: " + e.getMessage());
+            return "error/500";
+        }
     }
 }
