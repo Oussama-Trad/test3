@@ -20,6 +20,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { UserContext } from "../../context/UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  createDocumentRequest,
+  getDocumentRequests,
+} from "../../services/api/documentApi";
 
 const { width, height } = Dimensions.get("window");
 
@@ -32,6 +37,7 @@ const DocumentScreen = ({ navigation }) => {
   const [slideAnim] = useState(new Animated.Value(50));
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestText, setRequestText] = useState("");
+  const [selectedTypeId, setSelectedTypeId] = useState(null);
   const [documentTypes] = useState([
     {
       id: "attestation_travail",
@@ -45,7 +51,7 @@ const DocumentScreen = ({ navigation }) => {
   ]);
 
   useEffect(() => {
-    fetchDocuments();
+    fetchRequests();
 
     // Animation d'entrée
     Animated.parallel([
@@ -64,43 +70,27 @@ const DocumentScreen = ({ navigation }) => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchDocuments();
+    await fetchRequests();
     setRefreshing(false);
   }, []);
 
-  const fetchDocuments = async () => {
+  const fetchRequests = async () => {
     if (!refreshing) setLoading(true);
 
     try {
-      // Simuler des données de documents pour la démo
-      const mockDocuments = [
-        {
-          id: "1",
-          type: "attestation_travail",
-          name: "Attestation de travail",
-          status: "approved",
-          requestDate: new Date("2024-01-15"),
-          description: "Attestation de travail pour démarches administratives",
-        },
-        {
-          id: "2",
-          type: "fiche_paie",
-          name: "Fiche de paie - Janvier 2024",
-          status: "pending",
-          requestDate: new Date("2024-01-20"),
-          description: "Fiche de paie du mois de janvier 2024",
-        },
-        {
-          id: "3",
-          type: "conge_annuel",
-          name: "Demande de congé - Été 2024",
-          status: "rejected",
-          requestDate: new Date("2024-01-10"),
-          description: "Demande de congé pour les vacances d'été",
-        },
-      ];
-
-      setDocuments(mockDocuments);
+      const token = await AsyncStorage.getItem("token");
+      const res = await getDocumentRequests(token);
+      const reqs = Array.isArray(res?.requests) ? res.requests : [];
+      // Normalize into UI shape used by this screen
+      const mapped = reqs.map((r) => ({
+        id: r.id,
+        type: r.documentTypeId,
+        name: mapTypeName(r.documentTypeId),
+        status: mapStatus(r.status),
+        requestDate: r.createdAt ? new Date(r.createdAt) : new Date(),
+        description: r.commentaire || "",
+      }));
+      setDocuments(mapped);
     } catch (e) {
       console.error("Erreur lors du chargement des documents:", e);
       setDocuments([]);
@@ -108,6 +98,22 @@ const DocumentScreen = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const mapStatus = (status) => {
+    // Backend uses: En attente / En cours / Résolue / Refusée
+    if (!status) return "pending";
+    const s = status.toLowerCase();
+    if (s.includes("attente") || s === "pending") return "pending";
+    if (s.includes("cours")) return "pending";
+    if (s.includes("résol") || s === "approved") return "approved";
+    if (s.includes("refus") || s === "rejected") return "rejected";
+    return "pending";
+  };
+
+  const mapTypeName = (typeId) => {
+    const found = documentTypes.find((dt) => dt.id === typeId);
+    return found ? found.name : typeId || "Document";
   };
 
   const getStatusInfo = (status) => {
@@ -129,20 +135,28 @@ const DocumentScreen = ({ navigation }) => {
   };
 
   const handleRequestDocument = async () => {
-    if (!requestText.trim()) {
-      Alert.alert("Erreur", "Veuillez décrire votre demande");
+    if (!selectedTypeId) {
+      Alert.alert("Erreur", "Veuillez choisir un type de document");
       return;
     }
-
     try {
-      // Ici vous feriez l'appel API pour envoyer la demande
-      Alert.alert("Succès", "Votre demande a été envoyée avec succès");
-      setShowRequestModal(false);
-      setRequestText("");
-      // Optionnel: rafraîchir la liste des documents
-      await fetchDocuments();
+      const token = await AsyncStorage.getItem("token");
+      const payload = {
+        documentTypeId: selectedTypeId,
+        commentaire: requestText || "",
+      };
+      const res = await createDocumentRequest(token, payload);
+      if (res?.message === "Demande créée") {
+        Alert.alert("Succès", "Votre demande a été envoyée avec succès");
+        setShowRequestModal(false);
+        setRequestText("");
+        setSelectedTypeId(null);
+        await fetchRequests();
+      } else {
+        throw new Error(res?.message || "Création échouée");
+      }
     } catch (e) {
-      Alert.alert("Erreur", "Impossible d'envoyer la demande");
+      Alert.alert("Erreur", e.message || "Impossible d'envoyer la demande");
     }
   };
 
@@ -263,6 +277,7 @@ const DocumentScreen = ({ navigation }) => {
     <TouchableOpacity
       style={styles.typeItem}
       onPress={() => {
+        setSelectedTypeId(item.id);
         setRequestText(`Demande de ${item.name.toLowerCase()}`);
         setShowRequestModal(true);
       }}
@@ -416,9 +431,7 @@ const DocumentScreen = ({ navigation }) => {
           </LinearGradient>
 
           <View style={styles.modalContent}>
-            <Text style={styles.modalLabel}>
-              Types de documents disponibles :
-            </Text>
+            <Text style={styles.modalLabel}>Types de documents disponibles :</Text>
             <FlatList
               data={documentTypes}
               keyExtractor={(item) => item.id}
@@ -430,6 +443,11 @@ const DocumentScreen = ({ navigation }) => {
             <Text style={styles.modalLabel}>
               Description de votre demande :
             </Text>
+            {selectedTypeId && (
+              <Text style={{ color: "#6B7280", marginBottom: 8 }}>
+                Type sélectionné: {mapTypeName(selectedTypeId)}
+              </Text>
+            )}
             <TextInput
               style={styles.modalInput}
               placeholder="Décrivez votre demande de document..."

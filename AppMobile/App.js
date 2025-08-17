@@ -16,6 +16,7 @@ import ChatConversation from "./views/screens/ChatConversation";
 import HomeScreen from "./views/screens/HomeScreen";
 import PartenariatsScreen from "./views/screens/PartenariatsScreen";
 import { UserProvider, UserContext } from "./context/UserContext";
+import { NotificationsProvider, useNotifications } from "./context/NotificationsContext";
 import React, { useContext } from "react";
 
 import ReclamationsScreen from "./views/screens/ReclamationsScreen";
@@ -29,7 +30,28 @@ const Tab = createBottomTabNavigator();
 
 import ActualitesScreen from "./views/screens/ActualitesScreen";
 import MyLeavesScreen from "./views/screens/MyLeavesScreen";
-function MainTabs() {
+function NotificationBell({ navigation }) {
+  const { unseenCount } = useNotifications();
+  return (
+    <React.Fragment>
+      <Ionicons
+        name="notifications-outline"
+        size={22}
+        color="#fff"
+        onPress={() => navigation.navigate('Notifications')}
+        style={{ marginLeft: 15 }}
+      />
+      {unseenCount > 0 && (
+        <React.Fragment>
+          <Ionicons name="ellipse" size={10} color="#ff6b6b" style={{ position: 'absolute', left: 28, top: -2 }} />
+          <React.Fragment />
+        </React.Fragment>
+      )}
+    </React.Fragment>
+  );
+}
+
+function MainTabs({ navigation }) {
   const { user } = useContext(UserContext);
   return (
     <Tab.Navigator
@@ -48,9 +70,10 @@ function MainTabs() {
         },
         tabBarActiveTintColor: "#1D2D51",
         tabBarInactiveTintColor: "gray",
-        headerStyle: { backgroundColor: "#1D2D51" },
+  headerStyle: { backgroundColor: "#1D2D51" },
         headerTintColor: "#fff",
-        headerTitle: user ? `${user.nom} ${user.prenom}` : "",
+  headerTitle: user ? `${user.nom} ${user.prenom}` : "",
+  headerLeft: () => <NotificationBell navigation={navigation} />,
         tabBarStyle: { backgroundColor: "#fff" },
       })}
     >
@@ -69,6 +92,7 @@ function MainTabs() {
 export default function App() {
   return (
     <UserProvider>
+      <NotificationsProvider>
       <NavigationContainer>
         <Stack.Navigator
           initialRouteName="Splash"
@@ -105,8 +129,14 @@ export default function App() {
             component={LeaveRequestForm}
             options={{ headerShown: true, title: "Demande de congé" }}
           />
+          <Stack.Screen
+            name="Notifications"
+            component={require("./views/screens/NotificationsScreen").default}
+            options={{ headerShown: true, title: "Notifications" }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
+      </NotificationsProvider>
     </UserProvider>
   );
 }
