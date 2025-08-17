@@ -1,51 +1,598 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Liste des événements</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-<div class="container">
-    <h2>Événements</h2>
-    <a th:href="@{/events/create}" class="btn">Créer un événement</a>
-    <table>
-        <thead>
-        <tr>
-            <th>Titre</th>
-            <th>Date début</th>
-            <th>Date fin</th>
-            <th>Location</th>
-            <th>Département</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="event : ${events}">
-            <td th:text="${event.title}"></td>
-            <td th:text="${#dates.format(event.startDate, 'dd/MM/yyyy HH:mm')}"></td>
-            <td th:text="${event.endDate != null ? #dates.format(event.endDate, 'dd/MM/yyyy HH:mm') : '-'}"></td>
-                            <td>
-                                <span th:if="${event.locationId == 'all'}">Tous</span>
-                                <span th:if="${event.locationId != 'all'}">
-                                    <span th:each="loc : ${locations}" th:if="${loc.id == event.locationId}" th:text="${loc.nom}"></span>
-                                </span>
-                            </td>
-                        <td>
-                            <span th:if="${event.departementId == 'all'}">Tous</span>
-                            <span th:if="${event.departementId != 'all'}">
-                                <span th:each="dep : ${departements}" th:if="${dep.id == event.departementId}" th:text="${dep.nom}"></span>
-                            </span>
-                        </td>
-            <td>
-                <a th:href="@{'/events/edit/' + ${event.id}}">Modifier</a>
-                <form th:action="@{'/events/delete/' + ${event.id}}" method="post" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Supprimer cet événement ?')">Supprimer</button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-</body>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+      }
+
+      .header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .header i {
+        font-size: 2.8rem;
+        opacity: 0.9;
+      }
+
+      .add-button {
+        padding: 15px 25px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        text-decoration: none;
+        border-radius: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+      }
+
+      .add-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .stats-bar {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        padding: 20px 30px;
+        border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+      }
+
+      .stats-container {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #667eea;
+        font-weight: 600;
+      }
+
+      .stat-item i {
+        font-size: 1.2rem;
+      }
+
+      .stat-number {
+        background: rgba(102, 126, 234, 0.1);
+        padding: 5px 12px;
+        border-radius: 20px;
+        color: #667eea;
+        font-weight: 700;
+      }
+
+      .table-container {
+        padding: 30px;
+        overflow-x: auto;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .table th {
+        padding: 20px 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+        border: none;
+        position: relative;
+      }
+
+      .table th i {
+        margin-right: 8px;
+        opacity: 0.9;
+      }
+
+      .table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f1f3f4;
+      }
+
+      .table tbody tr:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(102, 126, 234, 0.05) 0%,
+          rgba(118, 75, 162, 0.05) 100%
+        );
+        transform: scale(1.01);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .table td {
+        padding: 18px 15px;
+        vertical-align: middle;
+        color: #2c3e50;
+        font-weight: 500;
+      }
+
+      .event-title {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1.1rem;
+      }
+
+      .date-badge {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
+      }
+
+      .date-end-badge {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
+      }
+
+      .no-date-badge {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .location-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .department-badge {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .all-badge {
+        background: linear-gradient(135deg, #fd7e14 0%, #e8590c 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .actions-cell {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .btn-small {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-small::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn-small:hover::before {
+        left: 100%;
+      }
+
+      .btn-edit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-edit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-delete {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+      }
+
+      .btn-delete:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+      }
+
+      .delete-form {
+        display: inline;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 30px;
+        color: #6c757d;
+      }
+
+      .empty-state i {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 20px;
+      }
+
+      .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #495057;
+      }
+
+      .empty-state p {
+        font-size: 1rem;
+        margin-bottom: 30px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 15px;
+          border-radius: 15px;
+        }
+
+        .header-content {
+          flex-direction: column;
+          gap: 20px;
+          text-align: center;
+        }
+
+        .header h2 {
+          font-size: 2rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .table-container {
+          padding: 20px;
+        }
+
+        .table {
+          font-size: 0.9rem;
+        }
+
+        .table th,
+        .table td {
+          padding: 12px 8px;
+        }
+
+        .actions-cell {
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .btn-small {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .stats-container {
+          justify-content: center;
+          text-align: center;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .table th:nth-child(4),
+        .table td:nth-child(4),
+        .table th:nth-child(5),
+        .table td:nth-child(5) {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="header-content">
+          <h2>
+            <i class="fas fa-calendar-alt"></i>
+            Événements
+          </h2>
+          <a th:href="@{/events/create}" class="add-button">
+            <i class="fas fa-plus"></i>
+            Créer un événement
+          </a>
+        </div>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stats-container">
+          <div class="stat-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Total événements :</span>
+            <span class="stat-number" th:text="${#lists.size(events)}">0</span>
+          </div>
+          <div class="stat-item">
+            <i class="fas fa-clock"></i>
+            <span>Gestion des événements</span>
+          </div>
+          <div class="stat-item">
+            <i class="fas fa-users"></i>
+            <span>Communication d'équipe</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="table" th:if="${not #lists.isEmpty(events)}">
+          <thead>
+            <tr>
+              <th>
+                <i class="fas fa-heading"></i>
+                Titre
+              </th>
+              <th>
+                <i class="fas fa-calendar-alt"></i>
+                Date début
+              </th>
+              <th>
+                <i class="fas fa-calendar-check"></i>
+                Date fin
+              </th>
+              <th>
+                <i class="fas fa-map-marker-alt"></i>
+                Location
+              </th>
+              <th>
+                <i class="fas fa-users"></i>
+                Département
+              </th>
+              <th>
+                <i class="fas fa-cogs"></i>
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="event : ${events}">
+              <td>
+                <span class="event-title" th:text="${event.title}"></span>
+              </td>
+              <td>
+                <span
+                  class="date-badge"
+                  th:text="${#dates.format(event.startDate, 'dd/MM/yyyy HH:mm')}"
+                ></span>
+              </td>
+              <td>
+                <span
+                  th:if="${event.endDate != null}"
+                  class="date-end-badge"
+                  th:text="${#dates.format(event.endDate, 'dd/MM/yyyy HH:mm')}"
+                ></span>
+                <span th:if="${event.endDate == null}" class="no-date-badge"
+                  >Non définie</span
+                >
+              </td>
+              <td>
+                <span th:if="${event.locationId == 'all'}" class="all-badge"
+                  >Toutes locations</span
+                >
+                <span th:if="${event.locationId != 'all'}">
+                  <span
+                    th:each="loc : ${locations}"
+                    th:if="${loc.id == event.locationId}"
+                    class="location-badge"
+                    th:text="${loc.nom}"
+                  ></span>
+                </span>
+              </td>
+              <td>
+                <span th:if="${event.departementId == 'all'}" class="all-badge"
+                  >Tous départements</span
+                >
+                <span th:if="${event.departementId != 'all'}">
+                  <span
+                    th:each="dep : ${departements}"
+                    th:if="${dep.id == event.departementId}"
+                    class="department-badge"
+                    th:text="${dep.nom}"
+                  ></span>
+                </span>
+              </td>
+              <td>
+                <div class="actions-cell">
+                  <a
+                    th:href="@{'/events/edit/' + ${event.id}}"
+                    class="btn-small btn-edit"
+                  >
+                    <i class="fas fa-edit"></i>
+                    Modifier
+                  </a>
+                  <form
+                    th:action="@{'/events/delete/' + ${event.id}}"
+                    method="post"
+                    class="delete-form"
+                  >
+                    <button
+                      type="submit"
+                      class="btn-small btn-delete"
+                      onclick="return confirm('Supprimer cet événement ?')"
+                    >
+                      <i class="fas fa-trash"></i>
+                      Supprimer
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div th:if="${#lists.isEmpty(events)}" class="empty-state">
+          <i class="fas fa-calendar-alt"></i>
+          <h3>Aucun événement trouvé</h3>
+          <p>
+            Commencez par créer votre premier événement pour informer vos
+            équipes.
+          </p>
+          <a th:href="@{/events/create}" class="btn-small btn-edit">
+            <i class="fas fa-plus"></i>
+            Créer un événement
+          </a>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>

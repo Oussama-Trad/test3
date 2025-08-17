@@ -1,47 +1,558 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestion des demandes de congé</title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
-</head>
-<body>
-    <h1>Gestion des demandes de congé</h1>
-    <table border="1">
-        <thead>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        font-size: 2.8rem;
+        opacity: 0.9;
+      }
+
+      .stats-bar {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        padding: 20px 30px;
+        border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+      }
+
+      .stats-container {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #667eea;
+        font-weight: 600;
+      }
+
+      .stat-item i {
+        font-size: 1.2rem;
+      }
+
+      .stat-number {
+        background: rgba(102, 126, 234, 0.1);
+        padding: 5px 12px;
+        border-radius: 20px;
+        color: #667eea;
+        font-weight: 700;
+      }
+
+      .table-container {
+        padding: 30px;
+        overflow-x: auto;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .table th {
+        padding: 20px 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+        border: none;
+        position: relative;
+      }
+
+      .table th i {
+        margin-right: 8px;
+        opacity: 0.9;
+      }
+
+      .table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f1f3f4;
+      }
+
+      .table tbody tr:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(102, 126, 234, 0.05) 0%,
+          rgba(118, 75, 162, 0.05) 100%
+        );
+        transform: scale(1.01);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .table td {
+        padding: 18px 15px;
+        vertical-align: middle;
+        color: #2c3e50;
+        font-weight: 500;
+      }
+
+      .employee-name {
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .type-badge {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .date-display {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
+      }
+
+      .location-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .department-badge {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .status-badge {
+        padding: 8px 15px;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-align: center;
+        display: inline-block;
+        min-width: 90px;
+      }
+
+      .status-en-attente {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+      }
+
+      .status-en-cours {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+      }
+
+      .status-accepte {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+      }
+
+      .status-refuse {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+      }
+
+      .action-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .status-select {
+        padding: 8px 15px;
+        border: 2px solid #e1e8ed;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: white;
+        color: #2c3e50;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 8px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+        padding-right: 35px;
+        min-width: 130px;
+      }
+
+      .status-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .btn-update {
+        padding: 8px 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .btn-update:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 30px;
+        color: #6c757d;
+      }
+
+      .empty-state i {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 20px;
+      }
+
+      .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #495057;
+      }
+
+      .empty-state p {
+        font-size: 1rem;
+        margin-bottom: 30px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 15px;
+          border-radius: 15px;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .table-container {
+          padding: 20px;
+        }
+
+        .table {
+          font-size: 0.9rem;
+        }
+
+        .table th,
+        .table td {
+          padding: 12px 8px;
+        }
+
+        .action-form {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .status-select,
+        .btn-update {
+          width: 100%;
+        }
+
+        .stats-container {
+          justify-content: center;
+          text-align: center;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .table th:nth-child(5),
+        .table td:nth-child(5),
+        .table th:nth-child(6),
+        .table td:nth-child(6) {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>
+          <i class="fas fa-calendar-times"></i>
+          Gestion des demandes de congé
+        </h1>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stats-container">
+          <div class="stat-item">
+            <i class="fas fa-clipboard-list"></i>
+            <span>Total demandes :</span>
+            <span class="stat-number" th:text="${#lists.size(requests)}"
+              >0</span
+            >
+          </div>
+          <div class="stat-item">
+            <i class="fas fa-clock"></i>
+            <span>Gestion RH</span>
+          </div>
+          <div class="stat-item">
+            <i class="fas fa-user-check"></i>
+            <span>Validation administrative</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="table" th:if="${not #lists.isEmpty(requests)}">
+          <thead>
             <tr>
-                <th>Employé</th>
-                <th>Type</th>
-                <th>Début</th>
-                <th>Fin</th>
-                <th>Lieu</th>
-                <th>Département</th>
-                <th>Statut</th>
-                <th>Actions</th>
+              <th>
+                <i class="fas fa-user"></i>
+                Employé
+              </th>
+              <th>
+                <i class="fas fa-tag"></i>
+                Type
+              </th>
+              <th>
+                <i class="fas fa-calendar-alt"></i>
+                Début
+              </th>
+              <th>
+                <i class="fas fa-calendar-check"></i>
+                Fin
+              </th>
+              <th>
+                <i class="fas fa-map-marker-alt"></i>
+                Lieu
+              </th>
+              <th>
+                <i class="fas fa-users"></i>
+                Département
+              </th>
+              <th>
+                <i class="fas fa-info-circle"></i>
+                Statut
+              </th>
+              <th>
+                <i class="fas fa-cogs"></i>
+                Actions
+              </th>
             </tr>
-        </thead>
-        <tbody>
-        <tr th:each="req : ${requests}">
-            <td th:text="${employeeMap[req.employeeId]} ?: req.employeeNom + ' ' + req.employeePrenom">Nom Employé</td>
-            <td th:text="${req.type}">Type</td>
-            <td th:text="${req.startDate}">Début</td>
-            <td th:text="${req.endDate}">Fin</td>
-            <td th:text="${locationMap[req.locationId]} ?: req.locationNom">Lieu</td>
-            <td th:text="${departementMap[req.departementId]} ?: req.departementNom">Département</td>
-            <td th:text="${req.status}">Statut</td>
-            <td>
-                <form th:action="@{'/leave-requests/update-status/' + ${req.id}}" method="post" style="display:inline">
-                    <select name="status">
-                        <option th:selected="${req.status == 'En attente'}">En attente</option>
-                        <option th:selected="${req.status == 'En cours'}">En cours</option>
-                        <option th:selected="${req.status == 'Accepté'}">Accepté</option>
-                        <option th:selected="${req.status == 'Refusé'}">Refusé</option>
-                    </select>
-                    <button type="submit">Changer</button>
+          </thead>
+          <tbody>
+            <tr th:each="req : ${requests}">
+              <td>
+                <div class="employee-name">
+                  <i class="fas fa-user-circle"></i>
+                  <span
+                    th:text="${employeeMap[req.employeeId]} ?: req.employeeNom + ' ' + req.employeePrenom"
+                    >Nom Employé</span
+                  >
+                </div>
+              </td>
+              <td>
+                <span class="type-badge" th:text="${req.type}">Type</span>
+              </td>
+              <td>
+                <span class="date-display" th:text="${req.startDate}"
+                  >Début</span
+                >
+              </td>
+              <td>
+                <span class="date-display" th:text="${req.endDate}">Fin</span>
+              </td>
+              <td>
+                <span
+                  class="location-badge"
+                  th:text="${locationMap[req.employeeId]} ?: req.locationNom"
+                  >Lieu</span
+                >
+              </td>
+              <td>
+                <span
+                  class="department-badge"
+                  th:text="${departementMap[req.departementId]} ?: req.departementNom"
+                  >Département</span
+                >
+              </td>
+              <td>
+                <span
+                  class="status-badge"
+                  th:classappend="${req.status == 'En attente'} ? 'status-en-attente' : 
+                                             (${req.status == 'En cours'} ? 'status-en-cours' : 
+                                             (${req.status == 'Accepté'} ? 'status-accepte' : 'status-refuse'))"
+                  th:text="${req.status}"
+                  >Statut</span
+                >
+              </td>
+              <td>
+                <form
+                  th:action="@{'/leave-requests/update-status/' + ${req.id}}"
+                  method="post"
+                  class="action-form"
+                >
+                  <select name="status" class="status-select">
+                    <option th:selected="${req.status == 'En attente'}">
+                      En attente
+                    </option>
+                    <option th:selected="${req.status == 'En cours'}">
+                      En cours
+                    </option>
+                    <option th:selected="${req.status == 'Accepté'}">
+                      Accepté
+                    </option>
+                    <option th:selected="${req.status == 'Refusé'}">
+                      Refusé
+                    </option>
+                  </select>
+                  <button type="submit" class="btn-update">
+                    <i class="fas fa-sync-alt"></i>
+                    Changer
+                  </button>
                 </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</body>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div th:if="${#lists.isEmpty(requests)}" class="empty-state">
+          <i class="fas fa-calendar-times"></i>
+          <h3>Aucune demande de congé</h3>
+          <p>Il n'y a actuellement aucune demande de congé à traiter.</p>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>

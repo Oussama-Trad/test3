@@ -1,24 +1,443 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modifier un type de document</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-<div class="admin-layout">
-    <div th:replace="~{fragments/navbar :: sidebar}"></div>
-    <main class="main-content">
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        min-height: 100vh;
+      }
+
+      .admin-layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .main-content {
+        flex: 1;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 700px;
+        margin: 50px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.15) 0%,
+          transparent 70%
+        );
+        animation: shimmer 4s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        font-size: 2.5rem;
+        opacity: 0.9;
+      }
+
+      .edit-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 10px;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+
+      .form-container {
+        padding: 40px;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+      }
+
+      .form-group:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .form-group:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .form-group:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        font-size: 1rem;
+        position: relative;
+      }
+
+      label i {
+        margin-right: 8px;
+        color: #f093fb;
+        width: 20px;
+      }
+
+      input[type="text"],
+      textarea {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        color: #2c3e50;
+        font-family: inherit;
+      }
+
+      input[type="text"]:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #f093fb;
+        box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.1);
+        transform: translateY(-2px);
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      .current-value {
+        background: linear-gradient(135deg, #fff5ff 0%, #ffe8f0 100%);
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid rgba(240, 147, 251, 0.2);
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+        color: #666;
+      }
+
+      .current-value strong {
+        color: #f093fb;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        justify-content: center;
+      }
+
+      .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+      }
+
+      .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+      }
+
+      .info-section {
+        background: linear-gradient(135deg, #fff5ff 0%, #ffe8f0 100%);
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid rgba(240, 147, 251, 0.2);
+        margin-bottom: 20px;
+      }
+
+      .info-section h3 {
+        color: #f093fb;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(240, 147, 251, 0.1);
+      }
+
+      .info-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+      }
+
+      .info-label {
+        font-weight: 600;
+        color: #666;
+      }
+
+      .info-value {
+        color: #2c3e50;
+        font-weight: 500;
+      }
+
+      @media (max-width: 768px) {
+        .admin-layout {
+          flex-direction: column;
+        }
+
+        .container {
+          margin: 20px;
+          border-radius: 15px;
+        }
+
+        .header h2 {
+          font-size: 1.8rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .form-container {
+          padding: 25px;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-layout">
+      <div th:replace="~{fragments/navbar :: sidebar}"></div>
+      <main class="main-content">
         <div class="container">
-            <h2>Modifier un type de document</h2>
-            <form th:action="@{'/document-types/' + ${documentType.id} + '/edit'}" th:object="${documentType}" method="post">
-                <input type="text" th:field="*{titre}" placeholder="Titre" required>
-                <textarea th:field="*{description}" placeholder="Description (facultatif)"></textarea>
-                <button type="submit" class="btn">Enregistrer</button>
-                <a th:href="@{/document-types}" class="btn">Annuler</a>
+          <div class="header">
+            <h2>
+              <i class="fas fa-edit"></i>
+              Modifier un type de document
+              <span class="edit-badge">EDIT</span>
+            </h2>
+          </div>
+
+          <div class="form-container">
+            <div class="info-section">
+              <h3>
+                <i class="fas fa-info-circle"></i>
+                Informations actuelles
+              </h3>
+              <div class="info-item">
+                <span class="info-label">Titre actuel :</span>
+                <span class="info-value" th:text="${documentType.titre}"></span>
+              </div>
+              <div
+                class="info-item"
+                th:if="${documentType.description != null and !#strings.isEmpty(documentType.description)}"
+              >
+                <span class="info-label">Description actuelle :</span>
+                <span
+                  class="info-value"
+                  th:text="${documentType.description}"
+                ></span>
+              </div>
+              <div
+                class="info-item"
+                th:unless="${documentType.description != null and !#strings.isEmpty(documentType.description)}"
+              >
+                <span class="info-label">Description actuelle :</span>
+                <span class="info-value" style="font-style: italic; color: #999"
+                  >Aucune description</span
+                >
+              </div>
+            </div>
+
+            <form
+              th:action="@{'/document-types/' + ${documentType.id} + '/edit'}"
+              th:object="${documentType}"
+              method="post"
+            >
+              <div class="form-group">
+                <label for="titre">
+                  <i class="fas fa-heading"></i>
+                  Nouveau titre :
+                </label>
+                <input
+                  type="text"
+                  id="titre"
+                  th:field="*{titre}"
+                  placeholder="Entrez le nouveau titre du type de document"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="description">
+                  <i class="fas fa-align-left"></i>
+                  Nouvelle description :
+                </label>
+                <textarea
+                  id="description"
+                  th:field="*{description}"
+                  placeholder="Entrez la nouvelle description (facultatif)"
+                ></textarea>
+              </div>
+
+              <div class="button-group">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save"></i>
+                  Enregistrer les modifications
+                </button>
+                <a th:href="@{/document-types}" class="btn btn-secondary">
+                  <i class="fas fa-times"></i>
+                  Annuler
+                </a>
+              </div>
             </form>
+          </div>
         </div>
-    </main>
-</div>
-</body>
+      </main>
+    </div>
+  </body>
 </html>

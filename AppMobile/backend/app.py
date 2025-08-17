@@ -3,7 +3,7 @@
 # --- APP INIT ---
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime, timedelta
 from bson import ObjectId
 import jwt
@@ -67,18 +67,36 @@ def get_partenariats():
 # Upload de pièce jointe pour réclamation
 @app.route('/api/reclamations/upload', methods=['POST'])
 def upload_piece_jointe():
+    print("--- Upload de pièce jointe ---")
+    print(f"Files reçus: {request.files}")
+    print(f"Form data: {request.form}")
+    
     if 'file' not in request.files:
+        print("Erreur: Aucun fichier dans request.files")
         return jsonify({'error': 'Aucun fichier envoyé'}), 400
+        
     file = request.files['file']
+    print(f"Nom du fichier: '{file.filename}'")
+    
     if file.filename == '':
+        print("Erreur: Nom de fichier vide")
         return jsonify({'error': 'Nom de fichier vide'}), 400
+        
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        # Retourner le chemin relatif pour stockage dans la réclamation
-        return jsonify({'piece_jointe': f'uploads/{filename}'}), 200
+        print(f"Sauvegarde vers: {filepath}")
+        
+        try:
+            file.save(filepath)
+            print(f"Fichier sauvegardé avec succès: {filename}")
+            # Retourner le chemin relatif pour stockage dans la réclamation
+            return jsonify({'piece_jointe': f'uploads/{filename}'}), 200
+        except Exception as e:
+            print(f"Erreur lors de la sauvegarde: {str(e)}")
+            return jsonify({'error': f'Erreur de sauvegarde: {str(e)}'}), 500
     else:
+        print(f"Type de fichier non autorisé. Extensions autorisées: {ALLOWED_EXTENSIONS}")
         return jsonify({'error': 'Type de fichier non autorisé'}), 400
 
 # Créer une réclamation (accepte piece_jointe en option)
@@ -137,6 +155,38 @@ def update_reclamation_statut(reclamation_id):
         if result.matched_count == 0:
             return jsonify({'error': 'Réclamation non trouvée'}), 404
         return jsonify({'success': True, 'message': 'Statut mis à jour'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Statistiques des réclamations pour un employé
+@app.route('/api/reclamations/stats/<employee_id>', methods=['GET'])
+def get_reclamations_stats(employee_id):
+    try:
+        # Compter les réclamations par statut pour cet employé
+        pipeline = [
+            {'$match': {'employeId': employee_id}},
+            {'$group': {
+                '_id': '$statut',
+                'count': {'$sum': 1}
+            }}
+        ]
+        
+        stats_cursor = reclamations_collection.aggregate(pipeline)
+        stats_by_status = {doc['_id']: doc['count'] for doc in stats_cursor}
+        
+        # Calculer le total
+        total = sum(stats_by_status.values())
+        
+        # Retourner les statistiques avec des valeurs par défaut
+        stats = {
+            'total': total,
+            'en_attente': stats_by_status.get('En attente', 0),
+            'en_cours': stats_by_status.get('En cours', 0),
+            'resolue': stats_by_status.get('Résolue', 0),
+            'rejetee': stats_by_status.get('Rejetée', 0)
+        }
+        
+        return jsonify(stats), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

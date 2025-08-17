@@ -1,41 +1,521 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Créer un événement</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-<div class="container">
-    <h2>Créer un événement</h2>
-    <form th:action="@{/events/create}" th:object="${event}" method="post" enctype="multipart/form-data">
-        <label>Titre :</label>
-        <input type="text" th:field="*{title}" required><br>
-        <label>Description :</label>
-        <textarea th:field="*{description}" required></textarea><br>
-        <label>Photo :</label>
-        <input type="file" name="photoFile"><br>
-        <label>Date de début :</label>
-        <input type="datetime-local" th:field="*{startDate}" required><br>
-        <label>Date de fin :</label>
-        <input type="datetime-local" th:field="*{endDate}"><br>
-        <div th:if="${role} == 'superadmin'">
-            <label>Localisation :</label>
-            <select th:field="*{locationId}">
-                <option value="">Choisir</option>
-                <option th:each="loc : ${locations}" th:value="${loc.id}" th:text="${loc.nom}"></option>
-                <option value="tout">Tous</option>
-            </select><br>
-            <label>Département :</label>
-            <select th:field="*{departementId}">
-                <option value="">Choisir</option>
-                <option th:each="dep : ${departements}" th:value="${dep.id}" th:text="${dep.nom}"></option>
-                <option value="tout">Tous</option>
-            </select><br>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        font-size: 2.8rem;
+        opacity: 0.9;
+      }
+
+      .form-container {
+        padding: 40px;
+      }
+
+      .form-info {
+        background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #17a2b8;
+        margin-bottom: 25px;
+        color: #0c5460;
+      }
+
+      .form-info i {
+        margin-right: 8px;
+        color: #17a2b8;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 25px;
+      }
+
+      .form-group {
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+      }
+
+      .form-group:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .form-group:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .form-group:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .form-group:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+      .form-group:nth-child(5) {
+        animation-delay: 0.5s;
+      }
+      .form-group:nth-child(6) {
+        animation-delay: 0.6s;
+      }
+
+      .form-group-full {
+        grid-column: 1 / -1;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        font-size: 1rem;
+        position: relative;
+      }
+
+      label i {
+        margin-right: 8px;
+        color: #667eea;
+        width: 20px;
+      }
+
+      .required-field::after {
+        content: "*";
+        color: #e74c3c;
+        margin-left: 4px;
+      }
+
+      input[type="text"],
+      input[type="datetime-local"],
+      textarea,
+      select,
+      input[type="file"] {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        color: #2c3e50;
+        font-family: inherit;
+      }
+
+      input[type="text"]:focus,
+      input[type="datetime-local"]:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 12px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+        padding-right: 40px;
+      }
+
+      input[type="file"] {
+        border: 2px dashed #e1e8ed;
+        padding: 20px;
+        text-align: center;
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        position: relative;
+      }
+
+      input[type="file"]:hover {
+        border-color: #667eea;
+        background: linear-gradient(135deg, #e8ecff 0%, #d1d9ff 100%);
+      }
+
+      .datetime-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .admin-section {
+        background: linear-gradient(135deg, #fff5e6 0%, #ffe0b3 100%);
+        padding: 25px;
+        border-radius: 15px;
+        border: 1px solid #ffa726;
+        margin: 20px 0;
+        grid-column: 1 / -1;
+      }
+
+      .admin-section h3 {
+        color: #e65100;
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+      }
+
+      .admin-section h3 i {
+        margin-right: 10px;
+        font-size: 1.4rem;
+      }
+
+      .admin-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        justify-content: center;
+        grid-column: 1 / -1;
+      }
+
+      .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+      }
+
+      .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 15px;
+          border-radius: 15px;
+        }
+
+        .header h2 {
+          font-size: 2rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .form-container {
+          padding: 25px;
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .datetime-group {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>
+          <i class="fas fa-calendar-plus"></i>
+          Créer un événement
+        </h2>
+      </div>
+
+      <div class="form-container">
+        <div class="form-info">
+          <i class="fas fa-info-circle"></i>
+          Créez un nouvel événement pour informer vos équipes. Les champs
+          marqués d'un astérisque (*) sont obligatoires.
         </div>
-        <button type="submit">Créer</button>
-        <a th:href="@{/events}">Annuler</a>
-    </form>
-</div>
-</body>
+
+        <form
+          th:action="@{/events/create}"
+          th:object="${event}"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          <div class="form-grid">
+            <div class="form-group form-group-full">
+              <label for="title" class="required-field">
+                <i class="fas fa-heading"></i>
+                Titre :
+              </label>
+              <input
+                type="text"
+                id="title"
+                th:field="*{title}"
+                placeholder="Titre de l'événement"
+                required
+              />
+            </div>
+
+            <div class="form-group form-group-full">
+              <label for="description" class="required-field">
+                <i class="fas fa-align-left"></i>
+                Description :
+              </label>
+              <textarea
+                id="description"
+                th:field="*{description}"
+                placeholder="Description détaillée de l'événement..."
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group form-group-full">
+              <label for="photo">
+                <i class="fas fa-image"></i>
+                Photo :
+              </label>
+              <input type="file" id="photo" name="photoFile" accept="image/*" />
+            </div>
+
+            <div class="form-group form-group-full">
+              <div class="datetime-group">
+                <div>
+                  <label for="startDate" class="required-field">
+                    <i class="fas fa-calendar-alt"></i>
+                    Date de début :
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="startDate"
+                    th:field="*{startDate}"
+                    required
+                  />
+                </div>
+                <div>
+                  <label for="endDate">
+                    <i class="fas fa-calendar-check"></i>
+                    Date de fin :
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="endDate"
+                    th:field="*{endDate}"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div th:if="${role} == 'superadmin'" class="admin-section">
+              <h3>
+                <i class="fas fa-user-shield"></i>
+                Configuration administrateur
+              </h3>
+              <div class="admin-grid">
+                <div class="form-group">
+                  <label for="locationId">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Localisation :
+                  </label>
+                  <select id="locationId" th:field="*{locationId}">
+                    <option value="">Choisir une localisation</option>
+                    <option
+                      th:each="loc : ${locations}"
+                      th:value="${loc.id}"
+                      th:text="${loc.nom}"
+                    ></option>
+                    <option value="tout">Toutes les localisations</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="departementId">
+                    <i class="fas fa-users"></i>
+                    Département :
+                  </label>
+                  <select id="departementId" th:field="*{departementId}">
+                    <option value="">Choisir un département</option>
+                    <option
+                      th:each="dep : ${departements}"
+                      th:value="${dep.id}"
+                      th:text="${dep.nom}"
+                    ></option>
+                    <option value="tout">Tous les départements</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Créer l'événement
+              </button>
+              <a th:href="@{/events}" class="btn btn-secondary">
+                <i class="fas fa-times"></i>
+                Annuler
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
 </html>

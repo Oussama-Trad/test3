@@ -1,37 +1,580 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Profil</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-<div class="admin-layout">
-    <div th:replace="~{fragments/navbar :: sidebar}"></div>
-    <main class="main-content">
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .admin-layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .main-content {
+        flex: 1;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        font-size: 2.8rem;
+        opacity: 0.9;
+      }
+
+      .profile-container {
+        padding: 40px;
+      }
+
+      .profile-form {
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+      }
+
+      .form-info {
+        background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #17a2b8;
+        margin-bottom: 25px;
+        color: #0c5460;
+      }
+
+      .form-info i {
+        margin-right: 8px;
+        color: #17a2b8;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 25px;
+      }
+
+      .form-group {
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+      }
+
+      .form-group:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .form-group:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .form-group:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .form-group:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+      .form-group:nth-child(5) {
+        animation-delay: 0.5s;
+      }
+      .form-group:nth-child(6) {
+        animation-delay: 0.6s;
+      }
+
+      .form-group-full {
+        grid-column: 1 / -1;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        font-size: 1rem;
+        position: relative;
+      }
+
+      label i {
+        margin-right: 8px;
+        color: #667eea;
+        width: 20px;
+      }
+
+      .required-field::after {
+        content: "*";
+        color: #e74c3c;
+        margin-left: 4px;
+      }
+
+      input[type="text"],
+      input[type="email"] {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        color: #2c3e50;
+        font-family: inherit;
+      }
+
+      input[type="text"]:focus,
+      input[type="email"]:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .conditional-fields {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        padding: 25px;
+        border-radius: 15px;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        margin: 20px 0;
+        grid-column: 1 / -1;
+      }
+
+      .conditional-fields h3 {
+        color: #667eea;
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+      }
+
+      .conditional-fields h3 i {
+        margin-right: 10px;
+        font-size: 1.4rem;
+      }
+
+      .conditional-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        justify-content: center;
+        grid-column: 1 / -1;
+      }
+
+      .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-danger {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+      }
+
+      .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+      }
+
+      .logout-form {
+        margin-top: 20px;
+        text-align: center;
+        animation: fadeInUp 0.6s ease-out 0.8s both;
+      }
+
+      .error-state {
+        background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+        padding: 30px;
+        border-radius: 15px;
+        border: 1px solid #e53e3e;
+        text-align: center;
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+      }
+
+      .error-icon {
+        font-size: 3rem;
+        color: #e53e3e;
+        margin-bottom: 20px;
+      }
+
+      .error-message {
+        color: #c53030;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+
+      .error-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #e53e3e;
+        text-decoration: none;
+        font-weight: 600;
+        padding: 10px 20px;
+        border: 2px solid #e53e3e;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .error-link:hover {
+        background: #e53e3e;
+        color: white;
+        transform: translateY(-2px);
+      }
+
+      @media (max-width: 768px) {
+        .admin-layout {
+          flex-direction: column;
+        }
+
+        .container {
+          margin: 15px;
+          border-radius: 15px;
+        }
+
+        .header h2 {
+          font-size: 2rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .profile-container {
+          padding: 25px;
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .conditional-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-layout">
+      <div th:replace="~{fragments/navbar :: sidebar}"></div>
+      <main class="main-content">
         <div class="container">
-            <h2>Mon Profil</h2>
-            <div th:if="${user != null}">
-                <form th:action="@{/profile}" method="post">
-                    <input type="text" name="nom" th:value="${user.nom ?: ''}" placeholder="Nom" required>
-                    <input type="text" name="prenom" th:value="${user.prenom ?: ''}" placeholder="Prénom" required>
-                    <input type="text" name="adresse" th:value="${user.adresse ?: ''}" placeholder="Adresse" required>
-                    <input type="text" name="numTel" th:value="${user.numTel ?: ''}" placeholder="Téléphone" required>
-                    <input type="text" name="location" th:value="${user.location ?: ''}" placeholder="Location" required th:if="${user.location != null}">
-                    <input type="text" name="departement" th:value="${user.departement ?: ''}" placeholder="Département" required th:if="${user.departement != null}">
-                    <input type="email" name="email" th:value="${user.email ?: ''}" placeholder="Email" required>
-                    <button type="submit">Enregistrer les modifications</button>
-                </form>
+          <div class="header">
+            <h2>
+              <i class="fas fa-user-circle"></i>
+              Mon Profil
+            </h2>
+          </div>
+
+          <div class="profile-container">
+            <div th:if="${user != null}" class="profile-form">
+              <div class="form-info">
+                <i class="fas fa-info-circle"></i>
+                Modifiez vos informations personnelles. Tous les champs marqués
+                d'un astérisque (*) sont obligatoires.
+              </div>
+
+              <form th:action="@{/profile}" method="post">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label for="nom" class="required-field">
+                      <i class="fas fa-user"></i>
+                      Nom :
+                    </label>
+                    <input
+                      type="text"
+                      id="nom"
+                      name="nom"
+                      th:value="${user.nom ?: ''}"
+                      placeholder="Votre nom de famille"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="prenom" class="required-field">
+                      <i class="fas fa-user"></i>
+                      Prénom :
+                    </label>
+                    <input
+                      type="text"
+                      id="prenom"
+                      name="prenom"
+                      th:value="${user.prenom ?: ''}"
+                      placeholder="Votre prénom"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group form-group-full">
+                    <label for="adresse" class="required-field">
+                      <i class="fas fa-home"></i>
+                      Adresse :
+                    </label>
+                    <input
+                      type="text"
+                      id="adresse"
+                      name="adresse"
+                      th:value="${user.adresse ?: ''}"
+                      placeholder="Votre adresse complète"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="numTel" class="required-field">
+                      <i class="fas fa-phone"></i>
+                      Téléphone :
+                    </label>
+                    <input
+                      type="text"
+                      id="numTel"
+                      name="numTel"
+                      th:value="${user.numTel ?: ''}"
+                      placeholder="Votre numéro de téléphone"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="email" class="required-field">
+                      <i class="fas fa-envelope"></i>
+                      Email :
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      th:value="${user.email ?: ''}"
+                      placeholder="Votre adresse email"
+                      required
+                    />
+                  </div>
+
+                  <div
+                    th:if="${user.location != null or user.departement != null}"
+                    class="conditional-fields"
+                  >
+                    <h3>
+                      <i class="fas fa-building"></i>
+                      Informations professionnelles
+                    </h3>
+                    <div class="conditional-grid">
+                      <div th:if="${user.location != null}" class="form-group">
+                        <label for="location" class="required-field">
+                          <i class="fas fa-map-marker-alt"></i>
+                          Location :
+                        </label>
+                        <input
+                          type="text"
+                          id="location"
+                          name="location"
+                          th:value="${user.location ?: ''}"
+                          placeholder="Votre localisation"
+                          required
+                        />
+                      </div>
+
+                      <div
+                        th:if="${user.departement != null}"
+                        class="form-group"
+                      >
+                        <label for="departement" class="required-field">
+                          <i class="fas fa-users"></i>
+                          Département :
+                        </label>
+                        <input
+                          type="text"
+                          id="departement"
+                          name="departement"
+                          th:value="${user.departement ?: ''}"
+                          placeholder="Votre département"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="button-group">
+                    <button type="submit" class="btn btn-primary">
+                      <i class="fas fa-save"></i>
+                      Enregistrer les modifications
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              <div class="logout-form">
                 <form th:action="@{/logout}" method="post">
-                    <button type="submit" class="logout">Déconnexion</button>
+                  <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Déconnexion
+                  </button>
                 </form>
+              </div>
             </div>
-            <div th:if="${user == null}">
-                <div style="color: #c00; font-weight: bold; margin: 32px 0;">Erreur : utilisateur non trouvé ou session expirée.<br>Veuillez vous reconnecter.</div>
-                <a th:href="@{/login}" class="nav-link">Retour à la connexion</a>
+
+            <div th:if="${user == null}" class="error-state">
+              <div class="error-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <div class="error-message">
+                Erreur : utilisateur non trouvé ou session expirée.<br />
+                Veuillez vous reconnecter.
+              </div>
+              <a th:href="@{/login}" class="error-link">
+                <i class="fas fa-sign-in-alt"></i>
+                Retour à la connexion
+              </a>
             </div>
+          </div>
         </div>
-    </main>
-</div>
-</body>
+      </main>
+    </div>
+  </body>
 </html>

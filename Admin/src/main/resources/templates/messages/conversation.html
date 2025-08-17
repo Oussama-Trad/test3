@@ -1,211 +1,585 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Messagerie - Discussion</title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
     <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body.chat-bg {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+      }
+
+      .admin-layout {
+        display: flex;
+        width: 100%;
+      }
+
+      .main-content {
+        flex: 1;
+        padding: 20px;
+      }
+
+      .chat-container {
+        max-width: 800px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 40px);
+        max-height: 800px;
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .chat-header {
+        display: flex;
+        align-items: center;
+        padding: 25px 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px 20px 0 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .chat-header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .chat-header-avatar {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-right: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        position: relative;
+        z-index: 1;
+      }
+
+      .chat-header-info {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+      }
+
+      .chat-header-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 5px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .chat-header-meta {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      .chat-header-meta span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .chat-header-meta i {
+        font-size: 0.9rem;
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 25px;
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .chat-messages::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .chat-messages::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+      }
+
+      .chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(102, 126, 234, 0.3);
+        border-radius: 4px;
+      }
+
+      .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: rgba(102, 126, 234, 0.5);
+      }
+
+      .chat-bubble-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        animation: fadeInUp 0.3s ease-out;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .chat-bubble {
+        max-width: 70%;
+        padding: 15px 20px;
+        border-radius: 20px;
+        font-size: 1rem;
+        line-height: 1.4;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        word-break: break-word;
+        position: relative;
+        transition: transform 0.2s ease;
+      }
+
+      .chat-bubble:hover {
+        transform: translateY(-1px);
+      }
+
+      .chat-bubble-employee {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        color: #2c3e50;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        align-self: flex-start;
+        border-bottom-left-radius: 6px;
+      }
+
+      .chat-bubble-admin {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 6px;
+      }
+
+      .chat-bubble-avatar,
+      .chat-bubble-avatar-admin {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+        flex-shrink: 0;
+        border: 2px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .chat-bubble-avatar {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+      }
+
+      .chat-bubble-avatar-admin {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .chat-bubble-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .chat-bubble-text {
+        margin-bottom: 5px;
+        word-wrap: break-word;
+      }
+
+      .chat-bubble-date {
+        font-size: 0.8rem;
+        opacity: 0.7;
+        text-align: right;
+        font-weight: 500;
+      }
+
+      .chat-bubble-employee .chat-bubble-date {
+        color: #6c757d;
+      }
+
+      .chat-bubble-admin .chat-bubble-date {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .chat-input-form {
+        display: flex;
+        align-items: center;
+        padding: 20px 25px;
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        border-top: 1px solid rgba(102, 126, 234, 0.1);
+        border-radius: 0 0 20px 20px;
+        gap: 15px;
+      }
+
+      .chat-input {
+        flex: 1;
+        padding: 15px 20px;
+        border: 2px solid #e1e8ed;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-family: inherit;
+        outline: none;
+        background: white;
+        color: #2c3e50;
+        transition: all 0.3s ease;
+      }
+
+      .chat-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-1px);
+      }
+
+      .chat-input::placeholder {
+        color: #9ca3af;
+      }
+
+      .chat-send-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+
+      .chat-send-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+      }
+
+      .chat-send-btn:active {
+        transform: translateY(0);
+      }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 200px;
+        color: #6c757d;
+        text-align: center;
+      }
+
+      .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: #e9ecef;
+      }
+
+      .empty-state h3 {
+        font-size: 1.2rem;
+        margin-bottom: 8px;
+        color: #495057;
+      }
+
+      .empty-state p {
+        font-size: 1rem;
+      }
+
+      @media (max-width: 768px) {
         body.chat-bg {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
+          flex-direction: column;
         }
+
+        .main-content {
+          padding: 10px;
+        }
+
         .chat-container {
-            max-width: 600px;
-            margin: 40px auto;
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 80vh;
+          margin: 10px auto;
+          height: calc(100vh - 20px);
+          border-radius: 15px;
         }
+
         .chat-header {
-            display: flex;
-            align-items: center;
-            padding: 24px 24px 12px 24px;
-            border-bottom: 1px solid #e0e0e0;
-            background: #f7fafc;
-            border-radius: 18px 18px 0 0;
+          padding: 20px;
+          border-radius: 15px 15px 0 0;
         }
+
         .chat-header-avatar {
-            width: 48px;
-            height: 48px;
-            background: #4f8cff;
-            color: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.7rem;
-            font-weight: bold;
-            margin-right: 18px;
+          width: 50px;
+          height: 50px;
+          font-size: 1.5rem;
+          margin-right: 15px;
         }
-        .chat-header-info {
-            flex: 1;
-        }
+
         .chat-header-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #222;
+          font-size: 1.2rem;
         }
+
         .chat-header-meta {
-            font-size: 0.95rem;
-            color: #888;
-            margin-top: 2px;
+          font-size: 0.9rem;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 5px;
         }
+
         .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-            background: #f5f7fa;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+          padding: 20px 15px;
         }
-        .chat-bubble-row {
-            display: flex;
-            align-items: flex-end;
-        }
+
         .chat-bubble {
-            max-width: 70%;
-            padding: 12px 18px;
-            border-radius: 18px;
-            font-size: 1.05rem;
-            margin-bottom: 2px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            word-break: break-word;
-            position: relative;
+          max-width: 85%;
+          padding: 12px 16px;
+          font-size: 0.95rem;
         }
-        .chat-bubble-employee {
-            background: #e3e9f7;
-            color: #222;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-        .chat-bubble-admin {
-            background: #4f8cff;
-            color: #fff;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-        .chat-bubble-avatar, .chat-bubble-avatar-admin {
-            width: 32px;
-            height: 32px;
-            background: #bfc9d9;
-            color: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin: 0 8px;
-        }
+
+        .chat-bubble-avatar,
         .chat-bubble-avatar-admin {
-            background: #4f8cff;
+          width: 35px;
+          height: 35px;
+          font-size: 1rem;
         }
-        .chat-bubble-content {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .chat-bubble-text {
-            margin-bottom: 2px;
-        }
-        .chat-bubble-date {
-            font-size: 0.85rem;
-            color: #888;
-            text-align: right;
-        }
+
         .chat-input-form {
-            display: flex;
-            padding: 18px 24px;
-            border-top: 1px solid #e0e0e0;
-            background: #f7fafc;
-            border-radius: 0 0 18px 18px;
+          padding: 15px;
+          gap: 10px;
         }
+
         .chat-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid #c3cfe2;
-            border-radius: 8px;
-            font-size: 1.05rem;
-            outline: none;
-            margin-right: 12px;
-            background: #fff;
+          padding: 12px 16px;
+          font-size: 0.95rem;
         }
+
         .chat-send-btn {
-            background: #4f8cff;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 0 22px;
-            font-size: 1.05rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
+          width: 45px;
+          height: 45px;
+          font-size: 1.1rem;
         }
-        .chat-send-btn:hover {
-            background: #2563eb;
-        }
+      }
     </style>
-</head>
-<body class="chat-bg">
-<div th:replace="~{fragments/navbar :: sidebar}"></div>
-<div class="chat-container">
-    <div class="chat-header">
-        <div class="chat-header-avatar">
-            <span th:text="${employee != null ? employee.prenom?.substring(0,1) : (employeeSnapshot != null ? employeeSnapshot.prenom?.substring(0,1) : 'U')}"></span>
-        </div>
-        <div class="chat-header-info">
-            <div class="chat-header-title">
-                <span th:text="${employee != null ? employee.nom : (employeeSnapshot != null ? employeeSnapshot.nom : 'Employé inconnu')}"></span>
-                <span th:text="${employee != null ? employee.prenom : (employeeSnapshot != null ? employeeSnapshot.prenom : '')}"></span>
+  </head>
+  <body class="chat-bg">
+    <div class="admin-layout">
+      <div th:replace="~{fragments/navbar :: sidebar}"></div>
+      <main class="main-content">
+        <div class="chat-container">
+          <div class="chat-header">
+            <div class="chat-header-avatar">
+              <span
+                th:text="${employee != null ? employee.prenom?.substring(0,1) : (employeeSnapshot != null ? employeeSnapshot.prenom?.substring(0,1) : 'U')}"
+              ></span>
             </div>
-            <div class="chat-header-meta">
-                <span th:text="'Location : ' + (${employee != null ? employee.locationId : (employeeSnapshot != null ? employeeSnapshot.locationId : '')})"></span>
-                <span> | </span>
-                <span th:text="'Département : ' + (${employee != null ? employee.departementId : (employeeSnapshot != null ? employeeSnapshot.departementId : '')})"></span>
+            <div class="chat-header-info">
+              <div class="chat-header-title">
+                <span
+                  th:text="${employee != null ? employee.nom : (employeeSnapshot != null ? employeeSnapshot.nom : 'Employé inconnu')}"
+                ></span>
+                <span
+                  th:text="${employee != null ? employee.prenom : (employeeSnapshot != null ? employeeSnapshot.prenom : '')}"
+                ></span>
+              </div>
+              <div class="chat-header-meta">
+                <span>
+                  <i class="fas fa-map-marker-alt"></i>
+                  Location :
+                  <span
+                    th:text="${employee != null ? employee.locationId : (employeeSnapshot != null ? employeeSnapshot.locationId : '')}"
+                  ></span>
+                </span>
+                <span>
+                  <i class="fas fa-users"></i>
+                  Département :
+                  <span
+                    th:text="${employee != null ? employee.departementId : (employeeSnapshot != null ? employeeSnapshot.departementId : '')}"
+                  ></span>
+                </span>
+              </div>
             </div>
-        </div>
-    </div>
-    <div class="chat-messages" id="chat-messages">
-        <div th:each="msg : ${messages}">
-            <div class="chat-bubble-row" th:style="${msg.sender_id == adminId} ? 'justify-content: flex-end;' : 'justify-content: flex-start;'">
+          </div>
+
+          <div class="chat-messages" id="chat-messages">
+            <div th:if="${#lists.isEmpty(messages)}" class="empty-state">
+              <i class="fas fa-comments"></i>
+              <h3>Début de la conversation</h3>
+              <p>Commencez à échanger avec cet employé</p>
+            </div>
+
+            <div th:each="msg : ${messages}">
+              <div
+                class="chat-bubble-row"
+                th:style="${msg.sender_id == adminId} ? 'justify-content: flex-end;' : 'justify-content: flex-start;'"
+              >
                 <!-- Message reçu (employé) -->
-                <div th:if="${msg.sender_id != adminId}">
-                    <div class="chat-bubble-avatar">
-                        <span th:text="${employee != null ? employee.prenom?.substring(0,1) : (employeeSnapshot != null ? employeeSnapshot.prenom?.substring(0,1) : 'U')}"></span>
-                    </div>
-                    <div class="chat-bubble chat-bubble-employee">
-                        <div class="chat-bubble-text" th:text="${msg.content}"></div>
-                        <div class="chat-bubble-date" th:text="${#dates.format(msg.timestamp, 'dd/MM/yyyy HH:mm')}"></div>
-                    </div>
+                <div
+                  th:if="${msg.sender_id != adminId}"
+                  style="display: flex; align-items: flex-end; gap: 10px"
+                >
+                  <div class="chat-bubble-avatar">
+                    <span
+                      th:text="${employee != null ? employee.prenom?.substring(0,1) : (employeeSnapshot != null ? employeeSnapshot.prenom?.substring(0,1) : 'U')}"
+                    ></span>
+                  </div>
+                  <div class="chat-bubble chat-bubble-employee">
+                    <div
+                      class="chat-bubble-text"
+                      th:text="${msg.content}"
+                    ></div>
+                    <div
+                      class="chat-bubble-date"
+                      th:text="${#dates.format(msg.timestamp, 'dd/MM/yyyy HH:mm')}"
+                    ></div>
+                  </div>
                 </div>
                 <!-- Message envoyé (admin) -->
-                <div th:if="${msg.sender_id == adminId}">
-                    <div class="chat-bubble chat-bubble-admin">
-                        <div class="chat-bubble-text" th:text="${msg.content}"></div>
-                        <div class="chat-bubble-date" th:text="${#dates.format(msg.timestamp, 'dd/MM/yyyy HH:mm')}"></div>
-                    </div>
-                    <div class="chat-bubble-avatar chat-bubble-avatar-admin">
-                        <span>A</span>
-                    </div>
+                <div
+                  th:if="${msg.sender_id == adminId}"
+                  style="display: flex; align-items: flex-end; gap: 10px"
+                >
+                  <div class="chat-bubble chat-bubble-admin">
+                    <div
+                      class="chat-bubble-text"
+                      th:text="${msg.content}"
+                    ></div>
+                    <div
+                      class="chat-bubble-date"
+                      th:text="${#dates.format(msg.timestamp, 'dd/MM/yyyy HH:mm')}"
+                    ></div>
+                  </div>
+                  <div class="chat-bubble-avatar chat-bubble-avatar-admin">
+                    <i class="fas fa-user-shield"></i>
+                  </div>
                 </div>
+              </div>
             </div>
+          </div>
+
+          <form
+            th:action="@{'/messages/' + ${employee != null ? employee.id : (employeeSnapshot != null ? employeeSnapshot.id : '')}}"
+            method="post"
+            class="chat-input-form"
+          >
+            <input
+              type="text"
+              name="content"
+              placeholder="Tapez votre message..."
+              required
+              autocomplete="off"
+              class="chat-input"
+            />
+            <button type="submit" class="chat-send-btn">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </form>
         </div>
+      </main>
     </div>
-    <form th:action="@{'/messages/' + ${employee != null ? employee.id : (employeeSnapshot != null ? employeeSnapshot.id : '')}}" method="post" class="chat-input-form">
-        <input type="text" name="content" placeholder="Votre message..." required autocomplete="off" class="chat-input" />
-        <button type="submit" class="chat-send-btn">Envoyer</button>
-    </form>
-</div>
-<script>
-// Scroll to bottom on load
-window.onload = function() {
-  var el = document.getElementById('chat-messages');
-  if (el) el.scrollTop = el.scrollHeight;
-}
-</script>
-</body>
+
+    <script>
+      // Scroll to bottom on load and after sending message
+      function scrollToBottom() {
+        var el = document.getElementById("chat-messages");
+        if (el) {
+          el.scrollTop = el.scrollHeight;
+        }
+      }
+
+      // Auto-scroll on load
+      window.onload = function () {
+        scrollToBottom();
+      };
+
+      // Auto-scroll after form submission
+      document
+        .querySelector(".chat-input-form")
+        .addEventListener("submit", function () {
+          setTimeout(scrollToBottom, 100);
+        });
+
+      // Auto-resize input and enter key support
+      const chatInput = document.querySelector(".chat-input");
+      chatInput.addEventListener("keypress", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          this.closest("form").submit();
+        }
+      });
+
+      // Focus input on load
+      chatInput.focus();
+    </script>
+  </body>
 </html>

@@ -1,27 +1,518 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title th:text="${partenariat.id} != null ? 'Modifier' : 'Créer'">Partenariat</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${partenariat.id} != null ? 'Modifier' : 'Créer'">
+      Partenariat
+    </title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
-</head>
-<body>
-    <h1 th:text="${partenariat.id} != null ? 'Modifier le partenariat' : 'Créer un partenariat'"></h1>
-    <form th:action="${partenariat.id} != null ? @{'/partenariats/edit/' + ${partenariat.id}} : @{/partenariats/create}" method="post">
-        <label>Titre :</label>
-        <input type="text" name="titre" th:value="${partenariat.titre}" required/><br/>
-        <label>Description :</label>
-        <textarea name="description" required th:text="${partenariat.description}"></textarea><br/>
-        <label>Type :</label>
-        <select name="type" th:value="${partenariat.type}">
-            <option value="formation" th:selected="${partenariat.type == 'formation'}">Formation</option>
-            <option value="loisirs" th:selected="${partenariat.type == 'loisirs'}">Loisirs</option>
-            <option value="offres spéciales" th:selected="${partenariat.type == 'offres spéciales'}">Offres spéciales</option>
-        </select><br/>
-    <label>Image/Logo :</label>
-    <input type="file" name="imageFile" accept="image/*"/><br/>
-        <button type="submit">Enregistrer</button>
-        <a th:href="@{/partenariats}">Annuler</a>
-    </form>
-</body>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        font-size: 2.8rem;
+        opacity: 0.9;
+      }
+
+      .form-container {
+        padding: 40px;
+      }
+
+      .form-info {
+        background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #17a2b8;
+        margin-bottom: 25px;
+        color: #0c5460;
+      }
+
+      .form-info i {
+        margin-right: 8px;
+        color: #17a2b8;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+      }
+
+      .form-group:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .form-group:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .form-group:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .form-group:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+      .form-group:nth-child(5) {
+        animation-delay: 0.5s;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        font-size: 1rem;
+        position: relative;
+      }
+
+      label i {
+        margin-right: 8px;
+        color: #667eea;
+        width: 20px;
+      }
+
+      .required-field::after {
+        content: "*";
+        color: #e74c3c;
+        margin-left: 4px;
+      }
+
+      input[type="text"],
+      textarea,
+      select,
+      input[type="file"] {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        color: #2c3e50;
+        font-family: inherit;
+      }
+
+      input[type="text"]:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 12px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+        padding-right: 40px;
+      }
+
+      input[type="file"] {
+        border: 2px dashed #e1e8ed;
+        padding: 20px;
+        text-align: center;
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        position: relative;
+        cursor: pointer;
+      }
+
+      input[type="file"]:hover {
+        border-color: #667eea;
+        background: linear-gradient(135deg, #e8ecff 0%, #d1d9ff 100%);
+      }
+
+      .partnership-types {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 10px;
+      }
+
+      .type-option {
+        display: none;
+      }
+
+      .type-label {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+        gap: 10px;
+      }
+
+      .type-label:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+      }
+
+      .type-option:checked + .type-label {
+        border-color: #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      }
+
+      .type-icon {
+        font-size: 1.2rem;
+        opacity: 0.8;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        justify-content: center;
+      }
+
+      .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+      }
+
+      .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+      }
+
+      .file-info {
+        margin-top: 10px;
+        padding: 10px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 15px;
+          border-radius: 15px;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .form-container {
+          padding: 25px;
+        }
+
+        .partnership-types {
+          grid-template-columns: 1fr;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1
+          th:text="${partenariat.id} != null ? 'Modifier le partenariat' : 'Créer un partenariat'"
+        >
+          <i class="fas fa-handshake"></i>
+          <span
+            th:text="${partenariat.id} != null ? 'Modifier le partenariat' : 'Créer un partenariat'"
+          ></span>
+        </h1>
+      </div>
+
+      <div class="form-container">
+        <div class="form-info">
+          <i class="fas fa-info-circle"></i>
+          <span
+            th:text="${partenariat.id} != null ? 'Modifiez les informations de ce partenariat.' : 'Créez un nouveau partenariat pour enrichir l\'offre de services.'"
+          ></span>
+          Les champs marqués d'un astérisque (*) sont obligatoires.
+        </div>
+
+        <form
+          th:action="${partenariat.id} != null ? @{'/partenariats/edit/' + ${partenariat.id}} : @{/partenariats/create}"
+          method="post"
+        >
+          <div class="form-group">
+            <label for="titre" class="required-field">
+              <i class="fas fa-heading"></i>
+              Titre :
+            </label>
+            <input
+              type="text"
+              id="titre"
+              name="titre"
+              th:value="${partenariat.titre}"
+              placeholder="Nom du partenariat"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="description" class="required-field">
+              <i class="fas fa-align-left"></i>
+              Description :
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              placeholder="Description détaillée du partenariat..."
+              required
+              th:text="${partenariat.description}"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="required-field">
+              <i class="fas fa-tags"></i>
+              Type de partenariat :
+            </label>
+            <div class="partnership-types">
+              <div>
+                <input
+                  type="radio"
+                  id="formation"
+                  name="type"
+                  value="formation"
+                  class="type-option"
+                  th:checked="${partenariat.type == 'formation'}"
+                />
+                <label for="formation" class="type-label">
+                  <i class="fas fa-graduation-cap type-icon"></i>
+                  Formation
+                </label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  id="loisirs"
+                  name="type"
+                  value="loisirs"
+                  class="type-option"
+                  th:checked="${partenariat.type == 'loisirs'}"
+                />
+                <label for="loisirs" class="type-label">
+                  <i class="fas fa-gamepad type-icon"></i>
+                  Loisirs
+                </label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  id="offres-speciales"
+                  name="type"
+                  value="offres spéciales"
+                  class="type-option"
+                  th:checked="${partenariat.type == 'offres spéciales'}"
+                />
+                <label for="offres-speciales" class="type-label">
+                  <i class="fas fa-percent type-icon"></i>
+                  Offres spéciales
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="imageFile">
+              <i class="fas fa-image"></i>
+              Image/Logo :
+            </label>
+            <input
+              type="file"
+              id="imageFile"
+              name="imageFile"
+              accept="image/*"
+            />
+            <div class="file-info">
+              <i class="fas fa-info-circle"></i>
+              Formats acceptés : JPG, PNG, GIF. Taille recommandée : 400x300px
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i>
+              <span
+                th:text="${partenariat.id} != null ? 'Enregistrer les modifications' : 'Créer le partenariat'"
+              ></span>
+            </button>
+            <a th:href="@{/partenariats}" class="btn btn-secondary">
+              <i class="fas fa-times"></i>
+              Annuler
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
 </html>

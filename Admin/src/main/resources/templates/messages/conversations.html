@@ -1,41 +1,602 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Messagerie - Conversations</title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
-</head>
-<body>
-<div th:replace="fragments/navbar :: sidebar"></div>
-<div class="container">
-    <h2>Messagerie interne</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Prénom</th>
-                <th>Location</th>
-                <th>Département</th>
-                <th>Dernier message</th>
-                <th>Date/Heure</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        <!-- Boucle sur les conversations -->
-        <tr th:each="conv : ${conversations}">
-            <td th:text="${conv.employee != null ? conv.employee.nom : (conv.employeeSnapshot != null ? conv.employeeSnapshot.nom : 'Employé inconnu')}"></td>
-            <td th:text="${conv.employee != null ? conv.employee.prenom : (conv.employeeSnapshot != null ? conv.employeeSnapshot.prenom : '')}"></td>
-            <td th:text="${conv.employee != null ? conv.employee.locationId : (conv.locationName != null ? conv.locationName : '')}"></td>
-            <td th:text="${conv.employee != null ? conv.employee.departementId : (conv.departementName != null ? conv.departementName : '')}"></td>
-            <td th:text="${conv.lastMessage}"></td>
-            <td th:text="${conv.lastDate}"></td>
-            <td>
-                <a th:if="${conv.employee != null}" th:href="@{'/messages/' + ${conv.employee.id}}" class="btn btn-primary">Ouvrir</a>
-                <a th:if="${conv.employee == null}" th:href="@{'/messages/' + ${conv.fallbackId}}" class="btn btn-warning">Accéder</a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-</body>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .admin-layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .main-content {
+        flex: 1;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        font-size: 2.8rem;
+        opacity: 0.9;
+      }
+
+      .stats-bar {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        padding: 20px 30px;
+        border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+      }
+
+      .stats-container {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #667eea;
+        font-weight: 600;
+      }
+
+      .stat-item i {
+        font-size: 1.2rem;
+      }
+
+      .stat-number {
+        background: rgba(102, 126, 234, 0.1);
+        padding: 5px 12px;
+        border-radius: 20px;
+        color: #667eea;
+        font-weight: 700;
+      }
+
+      .table-container {
+        padding: 30px;
+        overflow-x: auto;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .table th {
+        padding: 20px 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+        border: none;
+        position: relative;
+      }
+
+      .table th i {
+        margin-right: 8px;
+        opacity: 0.9;
+      }
+
+      .table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f1f3f4;
+        cursor: pointer;
+      }
+
+      .table tbody tr:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(102, 126, 234, 0.05) 0%,
+          rgba(118, 75, 162, 0.05) 100%
+        );
+        transform: scale(1.01);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .table td {
+        padding: 18px 15px;
+        vertical-align: middle;
+        color: #2c3e50;
+        font-weight: 500;
+      }
+
+      .employee-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .employee-avatar {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+
+      .employee-details {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .employee-name {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1.1rem;
+      }
+
+      .employee-status {
+        font-size: 0.85rem;
+        color: #6c757d;
+      }
+
+      .location-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .department-badge {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .message-preview {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #495057;
+        font-style: italic;
+      }
+
+      .message-time {
+        color: #6c757d;
+        font-size: 0.9rem;
+        white-space: nowrap;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+      }
+
+      .btn-warning:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+      }
+
+      .conversation-row {
+        position: relative;
+      }
+
+      .conversation-row.has-unread::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border-radius: 0 4px 4px 0;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 30px;
+        color: #6c757d;
+      }
+
+      .empty-state i {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 20px;
+      }
+
+      .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #495057;
+      }
+
+      .empty-state p {
+        font-size: 1rem;
+        margin-bottom: 30px;
+      }
+
+      @media (max-width: 768px) {
+        .admin-layout {
+          flex-direction: column;
+        }
+
+        .container {
+          margin: 15px;
+          border-radius: 15px;
+        }
+
+        .header h2 {
+          font-size: 2rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .table-container {
+          padding: 20px;
+        }
+
+        .table {
+          font-size: 0.9rem;
+        }
+
+        .table th,
+        .table td {
+          padding: 12px 8px;
+        }
+
+        .employee-info {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .stats-container {
+          justify-content: center;
+          text-align: center;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .table th:nth-child(3),
+        .table td:nth-child(3),
+        .table th:nth-child(4),
+        .table td:nth-child(4) {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-layout">
+      <div th:replace="fragments/navbar :: sidebar"></div>
+      <main class="main-content">
+        <div class="container">
+          <div class="header">
+            <h2>
+              <i class="fas fa-comments"></i>
+              Messagerie interne
+            </h2>
+          </div>
+
+          <div class="stats-bar">
+            <div class="stats-container">
+              <div class="stat-item">
+                <i class="fas fa-comments"></i>
+                <span>Conversations actives :</span>
+                <span
+                  class="stat-number"
+                  th:text="${#lists.size(conversations)}"
+                  >0</span
+                >
+              </div>
+              <div class="stat-item">
+                <i class="fas fa-users"></i>
+                <span>Communication interne</span>
+              </div>
+              <div class="stat-item">
+                <i class="fas fa-clock"></i>
+                <span>Messagerie temps réel</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="table" th:if="${not #lists.isEmpty(conversations)}">
+              <thead>
+                <tr>
+                  <th>
+                    <i class="fas fa-user"></i>
+                    Employé
+                  </th>
+                  <th>
+                    <i class="fas fa-map-marker-alt"></i>
+                    Location
+                  </th>
+                  <th>
+                    <i class="fas fa-users"></i>
+                    Département
+                  </th>
+                  <th>
+                    <i class="fas fa-comment"></i>
+                    Dernier message
+                  </th>
+                  <th>
+                    <i class="fas fa-clock"></i>
+                    Date/Heure
+                  </th>
+                  <th>
+                    <i class="fas fa-cogs"></i>
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Boucle sur les conversations -->
+                <tr th:each="conv : ${conversations}" class="conversation-row">
+                  <td>
+                    <div class="employee-info">
+                      <div
+                        class="employee-avatar"
+                        th:text="${(conv.employee != null ? conv.employee.nom : (conv.employeeSnapshot != null ? conv.employeeSnapshot.nom : 'Employé inconnu')).substring(0, 1).toUpperCase()}"
+                      ></div>
+                      <div class="employee-details">
+                        <div class="employee-name">
+                          <span
+                            th:text="${conv.employee != null ? conv.employee.nom : (conv.employeeSnapshot != null ? conv.employeeSnapshot.nom : 'Employé inconnu')}"
+                          ></span>
+                          <span
+                            th:text="${conv.employee != null ? conv.employee.prenom : (conv.employeeSnapshot != null ? conv.employeeSnapshot.prenom : '')}"
+                          ></span>
+                        </div>
+                        <div class="employee-status">
+                          <i
+                            class="fas fa-circle"
+                            style="color: #28a745; font-size: 0.6rem"
+                          ></i>
+                          En ligne
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span
+                      th:if="${conv.employee != null ? conv.employee.locationId : (conv.locationName != null ? conv.locationName : '')} != ''"
+                      class="location-badge"
+                      th:text="${conv.employee != null ? conv.employee.locationId : (conv.locationName != null ? conv.locationName : '')}"
+                    ></span>
+                    <span
+                      th:if="${conv.employee != null ? conv.employee.locationId : (conv.locationName != null ? conv.locationName : '')} == ''"
+                      class="location-badge"
+                      style="background: #6c757d"
+                      >Non défini</span
+                    >
+                  </td>
+                  <td>
+                    <span
+                      th:if="${conv.employee != null ? conv.employee.departementId : (conv.departementName != null ? conv.departementName : '')} != ''"
+                      class="department-badge"
+                      th:text="${conv.employee != null ? conv.employee.departementId : (conv.departementName != null ? conv.departementName : '')}"
+                    ></span>
+                    <span
+                      th:if="${conv.employee != null ? conv.employee.departementId : (conv.departementName != null ? conv.departementName : '')} == ''"
+                      class="department-badge"
+                      style="background: #6c757d; color: white"
+                      >Non défini</span
+                    >
+                  </td>
+                  <td>
+                    <div class="message-preview">
+                      <i
+                        class="fas fa-quote-left"
+                        style="
+                          font-size: 0.8rem;
+                          color: #6c757d;
+                          margin-right: 5px;
+                        "
+                      ></i>
+                      <span th:text="${conv.lastMessage}"></span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="message-time">
+                      <i class="fas fa-clock" style="margin-right: 5px"></i>
+                      <span th:text="${conv.lastDate}"></span>
+                    </div>
+                  </td>
+                  <td>
+                    <a
+                      th:if="${conv.employee != null}"
+                      th:href="@{'/messages/' + ${conv.employee.id}}"
+                      class="btn btn-primary"
+                    >
+                      <i class="fas fa-comments"></i>
+                      Ouvrir
+                    </a>
+                    <a
+                      th:if="${conv.employee == null}"
+                      th:href="@{'/messages/' + ${conv.fallbackId}}"
+                      class="btn btn-warning"
+                    >
+                      <i class="fas fa-exclamation-triangle"></i>
+                      Accéder
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div th:if="${#lists.isEmpty(conversations)}" class="empty-state">
+              <i class="fas fa-comments"></i>
+              <h3>Aucune conversation</h3>
+              <p>
+                Il n'y a actuellement aucune conversation dans la messagerie
+                interne.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
 </html>

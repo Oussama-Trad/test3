@@ -1,37 +1,500 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Liste des réclamations</title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
-</head>
-<body>
-<h2>Liste des réclamations</h2>
-<table border="1">
-    <thead>
-    <tr>
-        <th>Titre</th>
-        <th>Description</th>
-        <th>Pièce jointe</th>
-        <th>Statut</th>
-        <th>Date</th>
-        <th>Actions</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="reclamation : ${reclamations}">
-        <td th:text="${reclamation.titre}"></td>
-        <td th:text="${reclamation.description}"></td>
-        <td>
-            <a th:if="${reclamation.piece_jointe}" th:href="@{'/' + ${reclamation.piece_jointe}}" target="_blank">Voir</a>
-        </td>
-        <td th:text="${reclamation.statut}"></td>
-        <td th:text="${reclamation.date}"></td>
-        <td>
-            <a th:href="@{'/reclamations/edit/' + ${reclamation.id}}">Répondre / Modifier</a>
-        </td>
-    </tr>
-    </tbody>
-</table>
-</body>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #ff7b7b 0%, #ff416c 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #ff7b7b 0%, #ff416c 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        font-size: 2.8rem;
+        opacity: 0.9;
+      }
+
+      .stats-bar {
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+        padding: 20px 30px;
+        border-bottom: 1px solid rgba(255, 123, 123, 0.1);
+      }
+
+      .stats-container {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #dc3545;
+        font-weight: 600;
+      }
+
+      .stat-item i {
+        font-size: 1.2rem;
+      }
+
+      .stat-number {
+        background: rgba(220, 53, 69, 0.1);
+        padding: 5px 12px;
+        border-radius: 20px;
+        color: #dc3545;
+        font-weight: 700;
+      }
+
+      .table-container {
+        padding: 30px;
+        overflow-x: auto;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .table thead {
+        background: linear-gradient(135deg, #ff7b7b 0%, #ff416c 100%);
+        color: white;
+      }
+
+      .table th {
+        padding: 20px 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+        border: none;
+        position: relative;
+      }
+
+      .table th i {
+        margin-right: 8px;
+        opacity: 0.9;
+      }
+
+      .table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f1f3f4;
+      }
+
+      .table tbody tr:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(255, 123, 123, 0.05) 0%,
+          rgba(255, 65, 108, 0.05) 100%
+        );
+        transform: scale(1.01);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .table td {
+        padding: 18px 15px;
+        vertical-align: middle;
+        color: #2c3e50;
+        font-weight: 500;
+      }
+
+      .title-cell {
+        font-weight: 600;
+        color: #2c3e50;
+        max-width: 200px;
+      }
+
+      .description-cell {
+        max-width: 300px;
+        line-height: 1.4;
+      }
+
+      .description-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .attachment-cell {
+        text-align: center;
+      }
+
+      .attachment-link {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.3s ease;
+      }
+
+      .attachment-link:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+      }
+
+      .no-attachment {
+        color: #6c757d;
+        font-style: italic;
+        text-align: center;
+      }
+
+      .status-badge {
+        padding: 8px 15px;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-align: center;
+        display: inline-block;
+        min-width: 100px;
+      }
+
+      .status-nouveau {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+      }
+
+      .status-en-cours {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+      }
+
+      .status-resolu {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+      }
+
+      .status-ferme {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        color: white;
+      }
+
+      .date-display {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        white-space: nowrap;
+      }
+
+      .action-button {
+        background: linear-gradient(135deg, #ff7b7b 0%, #ff416c 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .action-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 123, 123, 0.4);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 30px;
+        color: #6c757d;
+      }
+
+      .empty-state i {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 20px;
+      }
+
+      .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #495057;
+      }
+
+      .empty-state p {
+        font-size: 1rem;
+        margin-bottom: 30px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 15px;
+          border-radius: 15px;
+        }
+
+        .header h2 {
+          font-size: 2rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .table-container {
+          padding: 20px;
+        }
+
+        .table {
+          font-size: 0.9rem;
+        }
+
+        .table th,
+        .table td {
+          padding: 12px 8px;
+        }
+
+        .title-cell,
+        .description-cell {
+          max-width: 150px;
+        }
+
+        .stats-container {
+          justify-content: center;
+          text-align: center;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .table th:nth-child(3),
+        .table td:nth-child(3) {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>
+          <i class="fas fa-exclamation-triangle"></i>
+          Liste des réclamations
+        </h2>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stats-container">
+          <div class="stat-item">
+            <i class="fas fa-clipboard-list"></i>
+            <span>Total réclamations :</span>
+            <span class="stat-number" th:text="${#lists.size(reclamations)}"
+              >0</span
+            >
+          </div>
+          <div class="stat-item">
+            <i class="fas fa-headset"></i>
+            <span>Service client</span>
+          </div>
+          <div class="stat-item">
+            <i class="fas fa-clock"></i>
+            <span>Traitement en cours</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="table" th:if="${not #lists.isEmpty(reclamations)}">
+          <thead>
+            <tr>
+              <th>
+                <i class="fas fa-heading"></i>
+                Titre
+              </th>
+              <th>
+                <i class="fas fa-align-left"></i>
+                Description
+              </th>
+              <th>
+                <i class="fas fa-paperclip"></i>
+                Pièce jointe
+              </th>
+              <th>
+                <i class="fas fa-info-circle"></i>
+                Statut
+              </th>
+              <th>
+                <i class="fas fa-calendar"></i>
+                Date
+              </th>
+              <th>
+                <i class="fas fa-cogs"></i>
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="reclamation : ${reclamations}">
+              <td class="title-cell">
+                <div th:text="${reclamation.titre}"></div>
+              </td>
+              <td class="description-cell">
+                <div
+                  class="description-text"
+                  th:text="${reclamation.description}"
+                ></div>
+              </td>
+              <td class="attachment-cell">
+                <a
+                  th:if="${!#strings.isEmpty(reclamation.piece_jointe)}"
+                  th:href="@{'/' + ${reclamation.piece_jointe}}"
+                  target="_blank"
+                  class="attachment-link"
+                >
+                  <i class="fas fa-external-link-alt"></i>
+                  Voir
+                </a>
+                <span
+                  th:if="${#strings.isEmpty(reclamation.piece_jointe)}"
+                  class="no-attachment"
+                >
+                  <i class="fas fa-minus"></i>
+                  Aucune
+                </span>
+              </td>
+              <td>
+                <span
+                  class="status-badge"
+                  th:classappend="${reclamation.statut == 'Nouveau'} ? 'status-nouveau' : 
+                                             (${reclamation.statut == 'En cours'} ? 'status-en-cours' : 
+                                             (${reclamation.statut == 'Résolu'} ? 'status-resolu' : 'status-ferme'))"
+                  th:text="${reclamation.statut}"
+                  >Statut</span
+                >
+              </td>
+              <td>
+                <span class="date-display" th:text="${reclamation.date}"></span>
+              </td>
+              <td>
+                <a
+                  th:href="@{'/reclamations/edit/' + ${reclamation.id}}"
+                  class="action-button"
+                >
+                  <i class="fas fa-reply"></i>
+                  Répondre / Modifier
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div th:if="${#lists.isEmpty(reclamations)}" class="empty-state">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h3>Aucune réclamation</h3>
+          <p>Il n'y a actuellement aucune réclamation à traiter.</p>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>

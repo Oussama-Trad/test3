@@ -1,29 +1,520 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Répondre à la réclamation</title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
-</head>
-<body>
-<h2 th:text="'Réclamation : ' + ${reclamation.titre}"></h2>
-<p><strong>Description :</strong> <span th:text="${reclamation.description}"></span></p>
-<p><strong>Pièce jointe :</strong>
-    <a th:if="${reclamation.piece_jointe}" th:href="@{'/' + ${reclamation.piece_jointe}}" target="_blank">Voir</a>
-    <span th:if="${reclamation.piece_jointe} == ''">Aucune</span>
-</p>
-<p><strong>Statut actuel :</strong> <span th:text="${reclamation.statut}"></span></p>
-<p><strong>Date :</strong> <span th:text="${reclamation.date}"></span></p>
-<form th:action="@{'/reclamations/update/' + ${reclamation.id}}" method="post">
-    <label for="statut">Nouveau statut :</label>
-    <select name="statut" id="statut">
-        <option th:selected="${reclamation.statut == 'En attente'}">En attente</option>
-        <option th:selected="${reclamation.statut == 'En cours'}">En cours</option>
-        <option th:selected="${reclamation.statut == 'Résolue'}">Résolue</option>
-        <option th:selected="${reclamation.statut == 'Refusée'}">Refusée</option>
-    </select>
-    <button type="submit">Mettre à jour</button>
-</form>
-<a th:href="@{'/reclamations'}">Retour à la liste</a>
-</body>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #ff7b7b 0%, #ff416c 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #ff7b7b 0%, #ff416c 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        font-size: 2.5rem;
+        opacity: 0.9;
+      }
+
+      .content-container {
+        padding: 40px;
+      }
+
+      .reclamation-details {
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+        padding: 25px;
+        border-radius: 15px;
+        border: 1px solid #ff7b7b;
+        margin-bottom: 30px;
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      .reclamation-details h3 {
+        color: #dc3545;
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+      }
+
+      .reclamation-details h3 i {
+        margin-right: 10px;
+        font-size: 1.4rem;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .detail-item {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 4px solid #ff7b7b;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .detail-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 1rem;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .detail-label i {
+        color: #ff7b7b;
+        width: 20px;
+      }
+
+      .detail-value {
+        color: #2c3e50;
+        font-weight: 500;
+        line-height: 1.6;
+        word-break: break-word;
+      }
+
+      .attachment-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .attachment-link:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+      }
+
+      .no-attachment {
+        color: #6c757d;
+        font-style: italic;
+      }
+
+      .status-badge {
+        padding: 8px 15px;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-align: center;
+        display: inline-block;
+      }
+
+      .status-en-attente {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+      }
+
+      .status-en-cours {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+      }
+
+      .status-resolue {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+      }
+
+      .status-refusee {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .update-form {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e1e8ed;
+        margin-bottom: 30px;
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+      }
+
+      .form-info {
+        background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #17a2b8;
+        margin-bottom: 25px;
+        color: #0c5460;
+      }
+
+      .form-info i {
+        margin-right: 8px;
+        color: #17a2b8;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        font-size: 1rem;
+        position: relative;
+      }
+
+      label i {
+        margin-right: 8px;
+        color: #ff7b7b;
+        width: 20px;
+      }
+
+      .required-field::after {
+        content: "*";
+        color: #e74c3c;
+        margin-left: 4px;
+      }
+
+      select {
+        width: 100%;
+        padding: 15px 50px 15px 20px;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-family: inherit;
+        background: rgba(255, 255, 255, 0.9);
+        color: #2c3e50;
+        appearance: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 15px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+      }
+
+      select:focus {
+        outline: none;
+        border-color: #ff7b7b;
+        box-shadow: 0 0 0 3px rgba(255, 123, 123, 0.1);
+        transform: translateY(-2px);
+        background: white;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+      }
+
+      .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #ff7b7b 0%, #ff416c 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 123, 123, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 123, 123, 0.4);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+      }
+
+      .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 15px;
+          border-radius: 15px;
+        }
+
+        .header h2 {
+          font-size: 1.8rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .content-container {
+          padding: 25px;
+        }
+
+        .detail-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>
+          <i class="fas fa-exclamation-triangle"></i>
+          <span th:text="'Réclamation : ' + ${reclamation.titre}"></span>
+        </h2>
+      </div>
+
+      <div class="content-container">
+        <div class="reclamation-details">
+          <h3>
+            <i class="fas fa-info-circle"></i>
+            Détails de la réclamation
+          </h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <div class="detail-label">
+                <i class="fas fa-align-left"></i>
+                Description
+              </div>
+              <div
+                class="detail-value"
+                th:text="${reclamation.description}"
+              ></div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-label">
+                <i class="fas fa-paperclip"></i>
+                Pièce jointe
+              </div>
+              <div class="detail-value">
+                <a
+                  th:if="${!#strings.isEmpty(reclamation.piece_jointe)}"
+                  th:href="@{'/' + ${reclamation.piece_jointe}}"
+                  target="_blank"
+                  class="attachment-link"
+                >
+                  <i class="fas fa-external-link-alt"></i>
+                  Voir la pièce jointe
+                </a>
+                <span
+                  th:if="${#strings.isEmpty(reclamation.piece_jointe)}"
+                  class="no-attachment"
+                  >Aucune pièce jointe</span
+                >
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-label">
+                <i class="fas fa-info-circle"></i>
+                Statut actuel
+              </div>
+              <div class="detail-value">
+                <span
+                  class="status-badge"
+                  th:classappend="${reclamation.statut == 'En attente'} ? 'status-en-attente' : 
+                                                 (${reclamation.statut == 'En cours'} ? 'status-en-cours' : 
+                                                 (${reclamation.statut == 'Résolue'} ? 'status-resolue' : 'status-refusee'))"
+                  th:text="${reclamation.statut}"
+                ></span>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-label">
+                <i class="fas fa-calendar-alt"></i>
+                Date de soumission
+              </div>
+              <div class="detail-value" th:text="${reclamation.date}"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="update-form">
+          <div class="form-info">
+            <i class="fas fa-edit"></i>
+            Modifiez le statut de cette réclamation pour informer l'employé de
+            son traitement.
+          </div>
+
+          <form
+            th:action="@{'/reclamations/update/' + ${reclamation.id}}"
+            method="post"
+          >
+            <div class="form-group">
+              <label for="statut" class="required-field">
+                <i class="fas fa-flag"></i>
+                Nouveau statut :
+              </label>
+              <select name="statut" id="statut">
+                <option th:selected="${reclamation.statut == 'En attente'}">
+                  En attente
+                </option>
+                <option th:selected="${reclamation.statut == 'En cours'}">
+                  En cours
+                </option>
+                <option th:selected="${reclamation.statut == 'Résolue'}">
+                  Résolue
+                </option>
+                <option th:selected="${reclamation.statut == 'Refusée'}">
+                  Refusée
+                </option>
+              </select>
+            </div>
+
+            <div class="button-group">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i>
+                Mettre à jour le statut
+              </button>
+              <a th:href="@{'/reclamations'}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la liste
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>

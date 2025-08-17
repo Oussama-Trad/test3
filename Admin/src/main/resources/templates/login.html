@@ -1,19 +1,505 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Connexion Admin</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-<div class="container">
-    <h2>Connexion</h2>
-    <form th:action="@{/login}" method="post">
-    <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Mot de passe" required>
-        <button type="submit">Se connecter</button>
-    </form>
-    <p>Pas encore de compte ? <a th:href="@{/register}">S'inscrire</a></p>
-</div>
-</body>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #667eea 0%,
+          #764ba2 50%,
+          #667eea 100%
+        );
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      body::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: rotateBackground 30s ease-in-out infinite;
+      }
+
+      @keyframes rotateBackground {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .floating-elements {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .floating-element {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.1);
+        font-size: 2rem;
+        animation: float 20s ease-in-out infinite;
+      }
+
+      .floating-element:nth-child(1) {
+        top: 10%;
+        left: 10%;
+        animation-delay: 0s;
+      }
+
+      .floating-element:nth-child(2) {
+        top: 20%;
+        right: 15%;
+        animation-delay: 3s;
+      }
+
+      .floating-element:nth-child(3) {
+        bottom: 20%;
+        left: 20%;
+        animation-delay: 6s;
+      }
+
+      .floating-element:nth-child(4) {
+        bottom: 10%;
+        right: 10%;
+        animation-delay: 9s;
+      }
+
+      .floating-element:nth-child(5) {
+        top: 50%;
+        left: 5%;
+        animation-delay: 12s;
+      }
+
+      .floating-element:nth-child(6) {
+        top: 70%;
+        right: 5%;
+        animation-delay: 15s;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px) rotate(0deg);
+          opacity: 0.1;
+        }
+        50% {
+          transform: translateY(-30px) rotate(180deg);
+          opacity: 0.3;
+        }
+      }
+
+      .container {
+        max-width: 450px;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        overflow: hidden;
+        animation: slideIn 0.8s ease-out;
+        position: relative;
+        z-index: 1;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(50px) scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .login-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .login-header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 4s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .login-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 1;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      .login-header h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        animation: fadeInUp 0.8s ease-out 0.3s both;
+      }
+
+      .login-subtitle {
+        font-size: 1rem;
+        margin-top: 8px;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+        animation: fadeInUp 0.8s ease-out 0.5s both;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .login-form {
+        padding: 40px 30px 30px;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+        animation: fadeInUp 0.8s ease-out;
+        animation-fill-mode: both;
+      }
+
+      .form-group:nth-child(1) {
+        animation-delay: 0.7s;
+      }
+      .form-group:nth-child(2) {
+        animation-delay: 0.9s;
+      }
+      .form-group:nth-child(3) {
+        animation-delay: 1.1s;
+      }
+
+      .input-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .input-icon {
+        position: absolute;
+        left: 20px;
+        color: #667eea;
+        font-size: 1.1rem;
+        z-index: 2;
+        transition: color 0.3s ease;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 18px 20px 18px 55px;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        font-size: 1rem;
+        background: rgba(255, 255, 255, 0.9);
+        color: #2c3e50;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        transform: translateY(-2px);
+        background: white;
+      }
+
+      .form-input:focus + .input-icon {
+        color: #667eea;
+      }
+
+      .form-input::placeholder {
+        color: #6c757d;
+        opacity: 0.7;
+      }
+
+      .login-button {
+        width: 100%;
+        padding: 18px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 25px;
+      }
+
+      .login-button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .login-button:hover::before {
+        left: 100%;
+      }
+
+      .login-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .login-button:active {
+        transform: translateY(0);
+      }
+
+      .login-footer {
+        text-align: center;
+        padding: 0 30px 30px;
+        animation: fadeInUp 0.8s ease-out 1.3s both;
+      }
+
+      .login-footer p {
+        color: #6c757d;
+        font-size: 0.95rem;
+        margin: 0;
+      }
+
+      .register-link {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .register-link::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s ease;
+      }
+
+      .register-link:hover::after {
+        width: 100%;
+      }
+
+      .register-link:hover {
+        color: #764ba2;
+      }
+
+      .security-note {
+        background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #17a2b8;
+        margin-bottom: 20px;
+        color: #0c5460;
+        font-size: 0.9rem;
+        animation: fadeInUp 0.8s ease-out 1.5s both;
+      }
+
+      .security-note i {
+        margin-right: 8px;
+        color: #17a2b8;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 15px;
+          border-radius: 15px;
+        }
+
+        .login-header {
+          padding: 30px 20px;
+        }
+
+        .login-header h2 {
+          font-size: 1.8rem;
+        }
+
+        .login-form {
+          padding: 30px 20px 20px;
+        }
+
+        .login-footer {
+          padding: 0 20px 25px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .login-header h2 {
+          font-size: 1.6rem;
+        }
+
+        .form-input {
+          padding: 15px 15px 15px 50px;
+        }
+
+        .login-button {
+          padding: 15px;
+          font-size: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="floating-elements">
+      <i class="floating-element fas fa-shield-alt"></i>
+      <i class="floating-element fas fa-lock"></i>
+      <i class="floating-element fas fa-user-shield"></i>
+      <i class="floating-element fas fa-key"></i>
+      <i class="floating-element fas fa-fingerprint"></i>
+      <i class="floating-element fas fa-user-check"></i>
+    </div>
+
+    <div class="container">
+      <div class="login-header">
+        <div class="login-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <h2>Connexion</h2>
+        <div class="login-subtitle">Administration sécurisée</div>
+      </div>
+
+      <div class="login-form">
+        <div class="security-note">
+          <i class="fas fa-info-circle"></i>
+          Accès réservé aux administrateurs autorisés uniquement.
+        </div>
+
+        <form th:action="@{/login}" method="post">
+          <div class="form-group">
+            <div class="input-group">
+              <input
+                type="email"
+                name="email"
+                placeholder="Adresse email"
+                required
+                class="form-input"
+              />
+              <i class="fas fa-envelope input-icon"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="input-group">
+              <input
+                type="password"
+                name="password"
+                placeholder="Mot de passe"
+                required
+                class="form-input"
+              />
+              <i class="fas fa-lock input-icon"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <button type="submit" class="login-button">
+              <i class="fas fa-sign-in-alt" style="margin-right: 8px"></i>
+              Se connecter
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="login-footer">
+        <p>
+          Pas encore de compte ?
+          <a th:href="@{/register}" class="register-link">S'inscrire</a>
+        </p>
+      </div>
+    </div>
+  </body>
 </html>

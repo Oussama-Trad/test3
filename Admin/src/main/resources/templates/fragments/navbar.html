@@ -1,16 +1,446 @@
 <!-- fragments/navbar.html -->
 <nav class="sidebar" th:fragment="sidebar">
-    <div class="sidebar-title">AdminPanel</div>
-    <ul>
-    <li><a th:href="@{/profile}" class="nav-link">Profil</a></li>
-    <li><a th:href="@{/employees}" class="nav-link">Employés</a></li>
-    <li><a th:href="@{/document-types}" class="nav-link">Types de documents</a></li>
-    <li><a th:href="@{/document-requests}" class="nav-link">Demandes de documents</a></li>
-    <li><a th:href="@{/actualites}" class="nav-link">Actualités</a></li>
-    <li><a th:href="@{/events}" class="nav-link">Événements</a></li>
-    <li><a th:href="@{/leave-requests}" class="nav-link">Demandes de congé</a></li>
-    <li><a th:href="@{/partenariats}" class="nav-link">Partenariats</a></li>
-    <li><a th:href="@{/reclamations}" class="nav-link">Réclamations</a></li>
-    <li><a th:href="@{/messages}" class="nav-link">Messagerie</a></li>
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <i class="fas fa-shield-alt"></i>
+      <span class="sidebar-title">AdminPanel</span>
+    </div>
+    <div class="sidebar-toggle" id="sidebarToggle">
+      <i class="fas fa-bars"></i>
+    </div>
+  </div>
+
+  <div class="sidebar-content">
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a th:href="@{/profile}" class="nav-link">
+          <i class="fas fa-user-circle"></i>
+          <span class="nav-text">Profil</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a th:href="@{/employees}" class="nav-link">
+          <i class="fas fa-users"></i>
+          <span class="nav-text">Employés</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a th:href="@{/document-types}" class="nav-link">
+          <i class="fas fa-file-alt"></i>
+          <span class="nav-text">Types de documents</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a th:href="@{/document-requests}" class="nav-link">
+          <i class="fas fa-file-invoice"></i>
+          <span class="nav-text">Demandes de documents</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a th:href="@{/actualites}" class="nav-link">
+          <i class="fas fa-newspaper"></i>
+          <span class="nav-text">Actualités</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a th:href="@{/events}" class="nav-link">
+          <i class="fas fa-calendar-alt"></i>
+          <span class="nav-text">Événements</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a th:href="@{/leave-requests}" class="nav-link">
+          <i class="fas fa-calendar-times"></i>
+          <span class="nav-text">Demandes de congé</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a th:href="@{/partenariats}" class="nav-link">
+          <i class="fas fa-handshake"></i>
+          <span class="nav-text">Partenariats</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a th:href="@{/reclamations}" class="nav-link">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span class="nav-text">Réclamations</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a th:href="@{/messages}" class="nav-link">
+          <i class="fas fa-comments"></i>
+          <span class="nav-text">Messagerie</span>
+        </a>
+      </li>
     </ul>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="admin-info">
+      <i class="fas fa-crown"></i>
+      <span class="admin-text">Administration</span>
+    </div>
+  </div>
 </nav>
+
+<style>
+  .sidebar {
+    width: 280px;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  }
+
+  .sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .sidebar-header {
+    padding: 25px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .sidebar-logo i {
+    font-size: 2rem;
+    color: #3498db;
+    text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+  }
+
+  .sidebar-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-toggle {
+    display: none;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+
+  .sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .sidebar-content {
+    padding: 20px 0;
+    flex: 1;
+  }
+
+  .nav-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-item {
+    margin: 0;
+    position: relative;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 25px;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border-left: 3px solid transparent;
+  }
+
+  .nav-link::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      rgba(52, 152, 219, 0.1) 0%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: -1;
+  }
+
+  .nav-link:hover::before {
+    transform: translateX(0);
+  }
+
+  .nav-link:hover {
+    color: white;
+    background: rgba(52, 152, 219, 0.1);
+    border-left-color: #3498db;
+    transform: translateX(5px);
+  }
+
+  .nav-link:active,
+  .nav-link.active {
+    color: #3498db;
+    background: rgba(52, 152, 219, 0.2);
+    border-left-color: #3498db;
+    transform: translateX(5px);
+  }
+
+  .nav-link i {
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+    color: #3498db;
+    transition: all 0.3s ease;
+  }
+
+  .nav-link:hover i {
+    transform: scale(1.1);
+    text-shadow: 0 0 8px rgba(52, 152, 219, 0.6);
+  }
+
+  .nav-text {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  .sidebar-footer {
+    padding: 20px 25px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
+    margin-top: auto;
+  }
+
+  .admin-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .admin-info i {
+    color: #f39c12;
+    font-size: 1rem;
+    text-shadow: 0 0 8px rgba(243, 156, 18, 0.5);
+  }
+
+  /* Animation d'entrée */
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .sidebar {
+    animation: slideInLeft 0.5s ease-out;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .sidebar {
+      width: 100%;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-toggle {
+      display: block;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+    }
+
+    .sidebar-logo i {
+      font-size: 1.8rem;
+    }
+
+    .sidebar-title {
+      font-size: 1.3rem;
+    }
+
+    .nav-link {
+      padding: 12px 20px;
+      gap: 12px;
+    }
+
+    .nav-link i {
+      font-size: 1.1rem;
+    }
+
+    .nav-text {
+      font-size: 0.95rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .sidebar-header {
+      padding: 15px;
+    }
+
+    .nav-link {
+      padding: 10px 15px;
+    }
+
+    .sidebar-footer {
+      padding: 15px;
+    }
+  }
+
+  /* États de chargement et interactions */
+  .nav-link:focus {
+    outline: none;
+    box-shadow: inset 0 0 0 2px rgba(52, 152, 219, 0.5);
+  }
+
+  .nav-item:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+  .nav-item:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .nav-item:nth-child(3) {
+    animation-delay: 0.2s;
+  }
+  .nav-item:nth-child(4) {
+    animation-delay: 0.25s;
+  }
+  .nav-item:nth-child(5) {
+    animation-delay: 0.3s;
+  }
+  .nav-item:nth-child(6) {
+    animation-delay: 0.35s;
+  }
+  .nav-item:nth-child(7) {
+    animation-delay: 0.4s;
+  }
+  .nav-item:nth-child(8) {
+    animation-delay: 0.45s;
+  }
+  .nav-item:nth-child(9) {
+    animation-delay: 0.5s;
+  }
+  .nav-item:nth-child(10) {
+    animation-delay: 0.55s;
+  }
+
+  .nav-item {
+    animation: fadeInUp 0.6s ease-out both;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Dark mode enhancements */
+  .sidebar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      circle at 20% 50%,
+      rgba(52, 152, 219, 0.1) 0%,
+      transparent 50%
+    );
+    pointer-events: none;
+    z-index: -1;
+  }
+</style>
+
+<script>
+  // Toggle sidebar on mobile
+  document.addEventListener("DOMContentLoaded", function () {
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const sidebar = document.querySelector(".sidebar");
+
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener("click", function () {
+        sidebar.classList.toggle("open");
+      });
+
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener("click", function (event) {
+        if (window.innerWidth <= 768) {
+          if (
+            !sidebar.contains(event.target) &&
+            sidebar.classList.contains("open")
+          ) {
+            sidebar.classList.remove("open");
+          }
+        }
+      });
+    }
+
+    // Active link highlighting
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll(".nav-link");
+
+    navLinks.forEach((link) => {
+      if (link.getAttribute("href") === currentPath) {
+        link.classList.add("active");
+      }
+    });
+  });
+</script>

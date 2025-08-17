@@ -34,6 +34,34 @@ public class MessageService {
 	}
 
 	public void sendMessage(String adminId, String employeeId, String content) {
-		// TODO: Implémenter la logique réelle d'envoi de message
+		if (adminId == null || employeeId == null || content == null || content.trim().isEmpty()) {
+			return;
+		}
+		Date now = new Date();
+		// 1) Insert the message
+		Document msg = new Document();
+		msg.put("sender_id", adminId);
+		msg.put("receiver_id", employeeId);
+		msg.put("content", content.trim());
+		msg.put("timestamp", now);
+		mongoTemplate.insert(msg, "messages");
+
+		// 2) Upsert or update conversation snapshot
+		// We consider one conversation per pair (adminId, employeeId)
+		Query convQuery = new Query();
+		convQuery.addCriteria(Criteria.where("participants").all(Arrays.asList(adminId, employeeId)));
+		Document existing = mongoTemplate.findOne(convQuery, Document.class, "conversations");
+		if (existing == null) {
+			Document conv = new Document();
+			conv.put("participants", Arrays.asList(adminId, employeeId));
+			conv.put("_id", employeeId); // keep employeeId as stable key for admin-side listing
+			conv.put("lastMessage", content.trim());
+			conv.put("lastDate", now);
+			mongoTemplate.insert(conv, "conversations");
+		} else {
+			existing.put("lastMessage", content.trim());
+			existing.put("lastDate", now);
+			mongoTemplate.save(existing, "conversations");
+		}
 	}
 }

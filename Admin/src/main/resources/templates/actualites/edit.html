@@ -1,38 +1,485 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modifier actualité</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-<div class="container">
-    <h2>Modifier actualité</h2>
-    <form th:action="@{'/actualites/edit/' + ${actualite.id}}" th:object="${actualite}" method="post" enctype="multipart/form-data">
-        <label>Titre :</label>
-        <input type="text" th:field="*{titre}" required><br>
-        <label>Description :</label>
-        <textarea th:field="*{description}" required></textarea><br>
-        <label>Photo :</label>
-        <input type="file" name="photoFile"><br>
-        <div th:if="${actualite.photo != null}">
-            <img th:src="@{'/uploads/' + ${actualite.photo}}" alt="photo" style="max-width:80px;max-height:80px;">
-        </div>
-        <div th:if="${role} == 'superadmin'">
-            <label>Localisation :</label>
-            <select th:field="*{locationId}">
-                <option value="">Choisir</option>
-                <option th:each="loc : ${locations}" th:value="${loc.id}" th:text="${loc.nom}" th:selected="${loc.id == actualite.locationId}"></option>
-            </select><br>
-            <label>Département :</label>
-            <select th:field="*{departementId}">
-                <option value="">Choisir</option>
-                <option th:each="dep : ${departements}" th:value="${dep.id}" th:text="${dep.nom}" th:selected="${dep.id == actualite.departementId}"></option>
-            </select><br>
-        </div>
-        <button type="submit">Enregistrer</button>
-        <a th:href="@{/actualites}">Annuler</a>
-    </form>
-</div>
-</body>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.15) 0%,
+          transparent 70%
+        );
+        animation: shimmer 4s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .header i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+      }
+
+      .form-container {
+        padding: 40px;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+      }
+
+      .form-group:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .form-group:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .form-group:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .form-group:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+      .form-group:nth-child(5) {
+        animation-delay: 0.5s;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        font-size: 1rem;
+        position: relative;
+      }
+
+      label i {
+        margin-right: 8px;
+        color: #f093fb;
+        width: 20px;
+      }
+
+      input[type="text"],
+      textarea,
+      select,
+      input[type="file"] {
+        width: 100%;
+        padding: 15px 20px;
+        border: 2px solid #e1e8ed;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        color: #2c3e50;
+      }
+
+      input[type="text"]:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: #f093fb;
+        box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.1);
+        transform: translateY(-2px);
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+        font-family: inherit;
+      }
+
+      select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 12px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+        padding-right: 40px;
+      }
+
+      input[type="file"] {
+        border-style: dashed;
+        border-width: 2px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+        background: linear-gradient(45deg, #fff5ff 0%, #ffe8f0 100%);
+      }
+
+      input[type="file"]:hover {
+        border-color: #f093fb;
+        background: linear-gradient(45deg, #ffe8f0 0%, #ffd8e8 100%);
+      }
+
+      .current-photo {
+        margin-top: 15px;
+        padding: 20px;
+        background: linear-gradient(135deg, #fff5ff 0%, #ffe8f0 100%);
+        border-radius: 12px;
+        border: 1px solid rgba(240, 147, 251, 0.2);
+        text-align: center;
+      }
+
+      .current-photo img {
+        max-width: 120px;
+        max-height: 120px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .current-photo img:hover {
+        transform: scale(1.05);
+      }
+
+      .current-photo p {
+        margin-top: 10px;
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .superadmin-section {
+        background: linear-gradient(135deg, #fff5ff 0%, #ffe8f0 100%);
+        padding: 25px;
+        border-radius: 15px;
+        border: 1px solid rgba(240, 147, 251, 0.2);
+        margin: 20px 0;
+      }
+
+      .superadmin-section h3 {
+        color: #f093fb;
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+      }
+
+      .superadmin-section h3 i {
+        margin-right: 10px;
+        font-size: 1.4rem;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        justify-content: center;
+      }
+
+      .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+      }
+
+      .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+      }
+
+      .edit-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 10px;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 10px;
+          border-radius: 15px;
+        }
+
+        .header h2 {
+          font-size: 2rem;
+        }
+
+        .form-container {
+          padding: 25px;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <i class="fas fa-edit"></i>
+        <h2>Modifier actualité <span class="edit-badge">EDIT</span></h2>
+      </div>
+
+      <div class="form-container">
+        <form
+          th:action="@{'/actualites/edit/' + ${actualite.id}}"
+          th:object="${actualite}"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          <div class="form-group">
+            <label for="titre">
+              <i class="fas fa-heading"></i>
+              Titre :
+            </label>
+            <input
+              type="text"
+              id="titre"
+              th:field="*{titre}"
+              required
+              placeholder="Entrez le titre de l'actualité"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="description">
+              <i class="fas fa-align-left"></i>
+              Description :
+            </label>
+            <textarea
+              id="description"
+              th:field="*{description}"
+              required
+              placeholder="Décrivez l'actualité en détail..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="photoFile">
+              <i class="fas fa-image"></i>
+              Photo :
+            </label>
+            <input
+              type="file"
+              id="photoFile"
+              name="photoFile"
+              accept="image/*"
+            />
+
+            <div th:if="${actualite.photo != null}" class="current-photo">
+              <img
+                th:src="@{'/uploads/' + ${actualite.photo}}"
+                alt="Photo actuelle"
+              />
+              <p>
+                <i class="fas fa-info-circle"></i> Photo actuelle (sera
+                remplacée si vous en sélectionnez une nouvelle)
+              </p>
+            </div>
+          </div>
+
+          <div th:if="${role} == 'superadmin'" class="superadmin-section">
+            <h3>
+              <i class="fas fa-cogs"></i>
+              Configuration avancée
+            </h3>
+
+            <div class="form-group">
+              <label for="locationId">
+                <i class="fas fa-map-marker-alt"></i>
+                Localisation :
+              </label>
+              <select id="locationId" th:field="*{locationId}">
+                <option value="">Choisir une localisation</option>
+                <option
+                  th:each="loc : ${locations}"
+                  th:value="${loc.id}"
+                  th:text="${loc.nom}"
+                  th:selected="${loc.id == actualite.locationId}"
+                ></option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="departementId">
+                <i class="fas fa-building"></i>
+                Département :
+              </label>
+              <select id="departementId" th:field="*{departementId}">
+                <option value="">Choisir un département</option>
+                <option
+                  th:each="dep : ${departements}"
+                  th:value="${dep.id}"
+                  th:text="${dep.nom}"
+                  th:selected="${dep.id == actualite.departementId}"
+                ></option>
+              </select>
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i>
+              Enregistrer les modifications
+            </button>
+            <a th:href="@{/actualites}" class="btn btn-secondary">
+              <i class="fas fa-times"></i>
+              Annuler
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
 </html>

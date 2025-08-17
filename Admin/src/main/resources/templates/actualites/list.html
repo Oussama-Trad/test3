@@ -1,60 +1,587 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Actualités</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-<div class="container">
-    <h2>Actualités</h2>
-    <div th:if="${role} == 'superadmin'">
-        <form method="get" th:action="@{/actualites}">
-            <label>Filtrer par localisation :</label>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px 20px 0 0;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(102, 126, 234, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 4s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        color: #667eea;
+        font-size: 2.8rem;
+      }
+
+      .filter-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 25px;
+        margin-bottom: 0;
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: end;
+        justify-content: center;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        min-width: 200px;
+      }
+
+      .filter-group label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .filter-group label i {
+        color: #667eea;
+        width: 20px;
+      }
+
+      .filter-group select {
+        padding: 12px 15px;
+        border: 2px solid #e1e8ed;
+        border-radius: 10px;
+        font-size: 1rem;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 12px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+        padding-right: 40px;
+      }
+
+      .filter-group select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-success {
+        background: linear-gradient(135deg, #48cae4 0%, #0077b6 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(72, 202, 228, 0.3);
+      }
+
+      .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(72, 202, 228, 0.4);
+      }
+
+      .actions-bar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 20px 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .stats {
+        color: #666;
+        font-weight: 500;
+      }
+
+      .table-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 0 0 20px 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+      }
+
+      th {
+        padding: 20px 15px;
+        text-align: left;
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 1rem;
+        border-bottom: 2px solid #e1e8ed;
+      }
+
+      tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f1f3f4;
+      }
+
+      tbody tr:hover {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        transform: scale(1.01);
+      }
+
+      td {
+        padding: 20px 15px;
+        vertical-align: middle;
+        color: #2c3e50;
+      }
+
+      .news-title {
+        font-weight: 600;
+        color: #667eea;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .news-description {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #666;
+        line-height: 1.4;
+      }
+
+      .news-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .news-image:hover {
+        transform: scale(1.1);
+      }
+
+      .no-image {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        font-size: 1.5rem;
+      }
+
+      .location-tag,
+      .department-tag {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .location-tag {
+        background: linear-gradient(135deg, #48cae4 0%, #0077b6 100%);
+        color: white;
+      }
+
+      .department-tag {
+        background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+        color: white;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .btn-edit {
+        background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .btn-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+      }
+
+      .btn-delete {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+      }
+
+      .empty-state i {
+        font-size: 4rem;
+        color: #ccc;
+        margin-bottom: 20px;
+      }
+
+      .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #2c3e50;
+      }
+
+      @media (max-width: 768px) {
+        .filter-form {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .filter-group {
+          min-width: auto;
+        }
+
+        .actions-bar {
+          flex-direction: column;
+          gap: 15px;
+          text-align: center;
+        }
+
+        .table-container {
+          overflow-x: auto;
+        }
+
+        table {
+          min-width: 800px;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h2>
+          <i class="fas fa-newspaper"></i>
+          Actualités
+        </h2>
+      </div>
+
+      <div th:if="${role} == 'superadmin'" class="filter-section">
+        <form method="get" th:action="@{/actualites}" class="filter-form">
+          <div class="filter-group">
+            <label>
+              <i class="fas fa-map-marker-alt"></i>
+              Filtrer par localisation :
+            </label>
             <select name="locationId">
-                <option value="">Toutes</option>
-                <option th:each="loc : ${locations}" th:value="${loc.id}" th:text="${loc.nom}" th:selected="${param.locationId == loc.id}"></option>
+              <option value="">Toutes les localisations</option>
+              <option
+                th:each="loc : ${locations}"
+                th:value="${loc.id}"
+                th:text="${loc.nom}"
+                th:selected="${param.locationId == loc.id}"
+              ></option>
             </select>
-            <label>Département :</label>
+          </div>
+
+          <div class="filter-group">
+            <label>
+              <i class="fas fa-building"></i>
+              Département :
+            </label>
             <select name="departementId">
-                <option value="">Tous</option>
-                <option th:each="dep : ${departements}" th:value="${dep.id}" th:text="${dep.nom}" th:selected="${param.departementId == dep.id}"></option>
+              <option value="">Tous les départements</option>
+              <option
+                th:each="dep : ${departements}"
+                th:value="${dep.id}"
+                th:text="${dep.nom}"
+                th:selected="${param.departementId == dep.id}"
+              ></option>
             </select>
-            <button type="submit">Filtrer</button>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-filter"></i>
+            Filtrer
+          </button>
         </form>
+      </div>
+
+      <div class="actions-bar">
+        <div class="stats">
+          <i class="fas fa-info-circle"></i>
+          <span
+            th:text="${#lists.size(actualites)} + ' actualité(s) trouvée(s)'"
+          ></span>
+        </div>
+        <a th:href="@{/actualites/create}" class="btn btn-success">
+          <i class="fas fa-plus"></i>
+          Nouvelle actualité
+        </a>
+      </div>
+
+      <div class="table-container">
+        <table th:if="${not #lists.isEmpty(actualites)}">
+          <thead>
+            <tr>
+              <th><i class="fas fa-heading"></i> Titre</th>
+              <th><i class="fas fa-align-left"></i> Description</th>
+              <th><i class="fas fa-image"></i> Photo</th>
+              <th><i class="fas fa-map-marker-alt"></i> Localisation</th>
+              <th><i class="fas fa-building"></i> Département</th>
+              <th><i class="fas fa-cogs"></i> Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="actu : ${actualites}">
+              <td>
+                <div
+                  class="news-title"
+                  th:text="${actu.titre}"
+                  th:title="${actu.titre}"
+                ></div>
+              </td>
+              <td>
+                <div
+                  class="news-description"
+                  th:text="${actu.description}"
+                  th:title="${actu.description}"
+                ></div>
+              </td>
+              <td>
+                <img
+                  th:if="${actu.photo != null}"
+                  th:src="@{'/uploads/' + ${actu.photo}}"
+                  alt="Photo actualité"
+                  class="news-image"
+                />
+                <div th:unless="${actu.photo != null}" class="no-image">
+                  <i class="fas fa-image"></i>
+                </div>
+              </td>
+              <td>
+                <span
+                  th:each="loc : ${locations}"
+                  th:if="${loc.id} == ${actu.locationId}"
+                  th:text="${loc.nom}"
+                  class="location-tag"
+                ></span>
+              </td>
+              <td>
+                <span
+                  th:each="dep : ${departements}"
+                  th:if="${dep.id} == ${actu.departementId}"
+                  th:text="${dep.nom}"
+                  class="department-tag"
+                ></span>
+              </td>
+              <td>
+                <div class="actions">
+                  <a
+                    th:href="@{'/actualites/edit/' + ${actu.id}}"
+                    class="btn-edit"
+                  >
+                    <i class="fas fa-edit"></i>
+                    Modifier
+                  </a>
+                  <form
+                    th:action="@{'/actualites/delete/' + ${actu.id}}"
+                    method="post"
+                    style="display: inline"
+                  >
+                    <button
+                      type="submit"
+                      onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette actualité ?')"
+                      class="btn-delete"
+                    >
+                      <i class="fas fa-trash"></i>
+                      Supprimer
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div th:if="${#lists.isEmpty(actualites)}" class="empty-state">
+          <i class="fas fa-newspaper"></i>
+          <h3>Aucune actualité trouvée</h3>
+          <p>
+            Aucune actualité ne correspond aux critères de recherche ou aucune
+            actualité n'a été créée.
+          </p>
+        </div>
+      </div>
     </div>
-    <a th:href="@{/actualites/create}" class="btn">Nouvelle actualité</a>
-    <table>
-        <thead>
-        <tr>
-            <th>Titre</th>
-            <th>Description</th>
-            <th>Photo</th>
-            <th>Localisation</th>
-            <th>Département</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="actu : ${actualites}">
-            <td th:text="${actu.titre}"></td>
-            <td th:text="${actu.description}"></td>
-            <td><img th:src="@{'/uploads/' + ${actu.photo}}" alt="photo" style="max-width:80px;max-height:80px;" th:if="${actu.photo != null}"></td>
-            <td>
-                <span th:each="loc : ${locations}" th:if="${loc.id} == ${actu.locationId}" th:text="${loc.nom}"></span>
-            </td>
-            <td>
-                <span th:each="dep : ${departements}" th:if="${dep.id} == ${actu.departementId}" th:text="${dep.nom}"></span>
-            </td>
-            <td>
-                <a th:href="@{'/actualites/edit/' + ${actu.id}}">Modifier</a>
-                <form th:action="@{'/actualites/delete/' + ${actu.id}}" method="post" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Supprimer cette actualité ?')">Supprimer</button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-</body>
+  </body>
 </html>

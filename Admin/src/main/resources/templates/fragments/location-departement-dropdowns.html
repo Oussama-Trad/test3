@@ -1,41 +1,327 @@
 <!-- Fragment: Dropdowns dynamiques pour Location et Département -->
-<div id="location-departement-fields">
-    <select id="locationSelect" name="location" required>
+<div id="location-departement-fields" class="location-departement-container">
+  <div class="select-group">
+    <label for="locationSelect" class="select-label">
+      <i class="fas fa-map-marker-alt"></i>
+      Localisation
+    </label>
+    <div class="select-wrapper">
+      <select
+        id="locationSelect"
+        name="location"
+        required
+        class="modern-select"
+      >
         <option value="">Sélectionner une location</option>
-    </select>
-    <select id="departementSelect" name="departement" required>
+      </select>
+      <i class="fas fa-chevron-down select-arrow"></i>
+    </div>
+  </div>
+
+  <div class="select-group">
+    <label for="departementSelect" class="select-label">
+      <i class="fas fa-users"></i>
+      Département
+    </label>
+    <div class="select-wrapper">
+      <select
+        id="departementSelect"
+        name="departement"
+        required
+        class="modern-select"
+      >
         <option value="">Sélectionner un département</option>
-    </select>
+      </select>
+      <i class="fas fa-chevron-down select-arrow"></i>
+    </div>
+  </div>
 </div>
+
+<style>
+  .location-departement-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+    padding: 25px;
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+    border-radius: 15px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .select-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .select-label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  .select-label i {
+    color: #667eea;
+    width: 16px;
+    font-size: 0.9rem;
+  }
+
+  .select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .modern-select {
+    width: 100%;
+    padding: 15px 50px 15px 20px;
+    border: 2px solid #e1e8ed;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    background: rgba(255, 255, 255, 0.9);
+    color: #2c3e50;
+    appearance: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .modern-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+    background: white;
+  }
+
+  .modern-select:hover {
+    border-color: #667eea;
+  }
+
+  .modern-select:disabled {
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .select-arrow {
+    position: absolute;
+    right: 15px;
+    color: #6c757d;
+    font-size: 0.8rem;
+    pointer-events: none;
+    transition: all 0.3s ease;
+  }
+
+  .select-wrapper:hover .select-arrow {
+    color: #667eea;
+  }
+
+  .modern-select:focus + .select-arrow {
+    color: #667eea;
+    transform: rotate(180deg);
+  }
+
+  .loading-select {
+    position: relative;
+  }
+
+  .loading-select::after {
+    content: "";
+    position: absolute;
+    right: 45px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e1e8ed;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: translateY(-50%) rotate(0deg);
+    }
+    100% {
+      transform: translateY(-50%) rotate(360deg);
+    }
+  }
+
+  .loading-select .select-arrow {
+    opacity: 0;
+  }
+
+  .select-error {
+    border-color: #e74c3c !important;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
+  }
+
+  .select-success {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1) !important;
+  }
+
+  .select-info {
+    margin-top: 5px;
+    font-size: 0.85rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .select-info i {
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 768px) {
+    .location-departement-container {
+      grid-template-columns: 1fr;
+      gap: 15px;
+      padding: 20px;
+    }
+
+    .modern-select {
+      padding: 12px 40px 12px 15px;
+      font-size: 0.9rem;
+    }
+
+    .select-arrow {
+      right: 12px;
+    }
+  }
+</style>
+
 <script>
-// Récupère la liste des locations
-fetch('/api/locations')
-  .then(res => res.json())
-  .then(locations => {
-    const select = document.getElementById('locationSelect');
-    locations.forEach(loc => {
-      const opt = document.createElement('option');
-      opt.value = loc.id || loc; // supporte id ou nom
-      opt.textContent = loc.nom || loc;
-      select.appendChild(opt);
-    });
-  });
-// Met à jour les départements selon la location
-const locationSelect = document.getElementById('locationSelect');
-const departementSelect = document.getElementById('departementSelect');
-locationSelect.addEventListener('change', function() {
-  const locationId = this.value;
-  departementSelect.innerHTML = '<option value="">Sélectionner un département</option>';
-  if (!locationId) return;
-  fetch('/api/departements?locationId=' + locationId)
-    .then(res => res.json())
-    .then(deps => {
-      deps.forEach(dep => {
-        const opt = document.createElement('option');
-        opt.value = dep.nom;
-        opt.textContent = dep.nom;
-        departementSelect.appendChild(opt);
+  // Variables pour l'état de chargement
+  const locationSelect = document.getElementById("locationSelect");
+  const departementSelect = document.getElementById("departementSelect");
+  const locationWrapper = locationSelect.parentElement;
+  const departementWrapper = departementSelect.parentElement;
+
+  // Fonction pour ajouter l'état de chargement
+  function setLoadingState(selectWrapper, isLoading) {
+    if (isLoading) {
+      selectWrapper.classList.add("loading-select");
+    } else {
+      selectWrapper.classList.remove("loading-select");
+    }
+  }
+
+  // Fonction pour définir l'état d'erreur
+  function setErrorState(select, hasError) {
+    if (hasError) {
+      select.classList.add("select-error");
+      select.classList.remove("select-success");
+    } else {
+      select.classList.remove("select-error");
+    }
+  }
+
+  // Fonction pour définir l'état de succès
+  function setSuccessState(select, hasSuccess) {
+    if (hasSuccess) {
+      select.classList.add("select-success");
+      select.classList.remove("select-error");
+    } else {
+      select.classList.remove("select-success");
+    }
+  }
+
+  // Récupère la liste des locations avec gestion d'état
+  setLoadingState(locationWrapper, true);
+  fetch("/api/locations")
+    .then((res) => {
+      if (!res.ok) throw new Error("Erreur de chargement des locations");
+      return res.json();
+    })
+    .then((locations) => {
+      const select = document.getElementById("locationSelect");
+      locations.forEach((loc) => {
+        const opt = document.createElement("option");
+        opt.value = loc.id || loc; // supporte id ou nom
+        opt.textContent = loc.nom || loc;
+        select.appendChild(opt);
       });
+      setSuccessState(select, true);
+      setLoadingState(locationWrapper, false);
+    })
+    .catch((error) => {
+      console.error("Erreur lors du chargement des locations:", error);
+      setErrorState(locationSelect, true);
+      setLoadingState(locationWrapper, false);
+      locationSelect.innerHTML =
+        '<option value="">Erreur de chargement</option>';
     });
-});
+
+  // Met à jour les départements selon la location avec gestion d'état
+  locationSelect.addEventListener("change", function () {
+    const locationId = this.value;
+
+    // Reset du département
+    departementSelect.innerHTML =
+      '<option value="">Sélectionner un département</option>';
+    setErrorState(departementSelect, false);
+    setSuccessState(departementSelect, false);
+
+    if (!locationId) {
+      departementSelect.disabled = true;
+      return;
+    }
+
+    // État de chargement
+    departementSelect.disabled = true;
+    setLoadingState(departementWrapper, true);
+
+    fetch("/api/departements?locationId=" + locationId)
+      .then((res) => {
+        if (!res.ok) throw new Error("Erreur de chargement des départements");
+        return res.json();
+      })
+      .then((deps) => {
+        departementSelect.innerHTML =
+          '<option value="">Sélectionner un département</option>';
+        deps.forEach((dep) => {
+          const opt = document.createElement("option");
+          opt.value = dep.nom;
+          opt.textContent = dep.nom;
+          departementSelect.appendChild(opt);
+        });
+        setSuccessState(departementSelect, true);
+        departementSelect.disabled = false;
+        setLoadingState(departementWrapper, false);
+      })
+      .catch((error) => {
+        console.error("Erreur lors du chargement des départements:", error);
+        departementSelect.innerHTML =
+          '<option value="">Erreur de chargement</option>';
+        setErrorState(departementSelect, true);
+        departementSelect.disabled = false;
+        setLoadingState(departementWrapper, false);
+      });
+  });
+
+  // État initial du département
+  departementSelect.disabled = true;
 </script>

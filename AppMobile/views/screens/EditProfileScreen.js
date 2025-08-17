@@ -1,275 +1,498 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Image, SafeAreaView, Platform } from 'react-native';
-import { CheckBox } from 'react-native-elements';
-import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient } from 'expo-linear-gradient';
-import InputField from '../../components/InputField';
-import { updateProfile } from '../../services/api/employeeApi';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+  Image,
+  SafeAreaView,
+  Platform,
+  Animated,
+  StatusBar,
+  Dimensions,
+} from "react-native";
+import { CheckBox } from "react-native-elements";
+import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
+import { Ionicons } from "@expo/vector-icons";
+import InputField from "../../components/InputField";
+import { updateProfile } from "../../services/api/employeeApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const { width, height } = Dimensions.get("window");
 
 const EditProfileScreen = ({ route, navigation }) => {
   const { profile } = route.params;
   const [form, setForm] = useState({ ...profile });
   const [editPassword, setEditPassword] = useState(false);
 
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   const handleChange = (key, value) => setForm({ ...form, [key]: value });
 
   const handleSave = async () => {
-    const token = await AsyncStorage.getItem('token');
+    const token = await AsyncStorage.getItem("token");
     const res = await updateProfile(token, form);
     if (res && res.success) {
-      Alert.alert('Succès', 'Profil mis à jour !');
+      Alert.alert("Succès", "Profil mis à jour !");
       navigation.goBack();
     } else {
-      Alert.alert('Erreur', res.message || 'Erreur lors de la mise à jour');
+      Alert.alert("Erreur", res.message || "Erreur lors de la mise à jour");
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <LinearGradient colors={['#1D2D51', '#2A4066']} style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <LinearGradient
-            colors={['#FFFFFF', '#F9FBFC']}
-            style={styles.card}
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="#667eea" />
+      <SafeAreaView style={styles.safeArea}>
+        <LinearGradient
+          colors={["#667eea", "#764ba2", "#f093fb"]}
+          style={styles.container}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
           >
-            <Text style={styles.title}>Modifier le profil</Text>
-            {form.photoDeProfil ? (
-              <Image source={{ uri: form.photoDeProfil }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarPlaceholderText}>Aucune photo</Text>
-              </View>
-            )}
             <TouchableOpacity
-              style={styles.importButton}
-              onPress={async () => {
-                const result = await ImagePicker.launchImageLibraryAsync({
-                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                  allowsEditing: true,
-                  aspect: [1, 1],
-                  quality: 0.7,
-                });
-                if (!result.canceled && result.assets && result.assets.length > 0) {
-                  handleChange('photoDeProfil', result.assets[0].uri);
-                }
-              }}
-              activeOpacity={0.7}
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.8}
             >
-              <Text style={styles.importButtonText}>Importer une photo</Text>
+              <BlurView intensity={20} style={styles.backButtonBlur}>
+                <Ionicons name="arrow-back" size={24} color="#fff" />
+              </BlurView>
             </TouchableOpacity>
-            <InputField
-              value={form.id}
-              onChangeText={v => handleChange('id', v)}
-              placeholder="ID (8 chiffres)"
-              editable={false}
-              style={styles.input}
-            />
-            <InputField
-              value={form.nom}
-              onChangeText={v => handleChange('nom', v)}
-              placeholder="Nom"
-              style={styles.input}
-            />
-            <InputField
-              value={form.prenom}
-              onChangeText={v => handleChange('prenom', v)}
-              placeholder="Prénom"
-              style={styles.input}
-            />
-            <View style={styles.row}>
-              <CheckBox
-                checked={editPassword}
-                onPress={() => setEditPassword(!editPassword)}
-                containerStyle={styles.checkbox}
-                checkedColor="#4f8cff"
-              />
-              <Text style={styles.checkboxLabel}>Modifier le mot de passe</Text>
-            </View>
-            {editPassword && (
-              <InputField
-                value={form.password}
-                onChangeText={v => handleChange('password', v)}
-                placeholder="Nouveau mot de passe"
-                secureTextEntry
-                style={styles.input}
-              />
-            )}
-            <InputField
-              value={form.adresse1}
-              onChangeText={v => handleChange('adresse1', v)}
-              placeholder="Adresse 1"
-              style={styles.input}
-            />
-            <InputField
-              value={form.adresse2}
-              onChangeText={v => handleChange('adresse2', v)}
-              placeholder="Adresse 2"
-              style={styles.input}
-            />
-            <InputField
-              value={form.numTel}
-              onChangeText={v => handleChange('numTel', v)}
-              placeholder="Téléphone"
-              style={styles.input}
-            />
-            <InputField
-              value={form.numTelParentale}
-              onChangeText={v => handleChange('numTelParentale', v)}
-              placeholder="Téléphone Parentale"
-              style={styles.input}
-            />
-            <InputField
-              value={form.location}
-              onChangeText={v => handleChange('location', v)}
-              placeholder="Site"
-              style={styles.input}
-            />
-            <InputField
-              value={form.departement}
-              onChangeText={v => handleChange('departement', v)}
-              placeholder="Département"
-              style={styles.input}
-            />
-            <TouchableOpacity style={styles.button} onPress={handleSave} activeOpacity={0.7}>
-              <Text style={styles.buttonText}>Enregistrer</Text>
-            </TouchableOpacity>
-          </LinearGradient>
-        </ScrollView>
-      </LinearGradient>
-    </SafeAreaView>
+            <Text style={styles.headerTitle}>Modifier le profil</Text>
+            <View style={styles.headerSpacer} />
+          </Animated.View>
+
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            <Animated.View
+              style={[
+                styles.cardContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+                },
+              ]}
+            >
+              <BlurView intensity={25} style={styles.card}>
+                <LinearGradient
+                  colors={["rgba(255,255,255,0.25)", "rgba(255,255,255,0.1)"]}
+                  style={styles.cardGradient}
+                >
+                  <View style={styles.avatarSection}>
+                    {form.photoDeProfil ? (
+                      <Image
+                        source={{ uri: form.photoDeProfil }}
+                        style={styles.avatar}
+                      />
+                    ) : (
+                      <LinearGradient
+                        colors={[
+                          "rgba(255,255,255,0.3)",
+                          "rgba(255,255,255,0.1)",
+                        ]}
+                        style={styles.avatarPlaceholder}
+                      >
+                        <Ionicons
+                          name="person"
+                          size={40}
+                          color="rgba(255,255,255,0.8)"
+                        />
+                      </LinearGradient>
+                    )}
+                    <TouchableOpacity
+                      style={styles.importButton}
+                      onPress={async () => {
+                        const result =
+                          await ImagePicker.launchImageLibraryAsync({
+                            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                            allowsEditing: true,
+                            aspect: [1, 1],
+                            quality: 0.7,
+                          });
+                        if (
+                          !result.canceled &&
+                          result.assets &&
+                          result.assets.length > 0
+                        ) {
+                          handleChange("photoDeProfil", result.assets[0].uri);
+                        }
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <LinearGradient
+                        colors={[
+                          "rgba(255,255,255,0.3)",
+                          "rgba(255,255,255,0.15)",
+                        ]}
+                        style={styles.importButtonGradient}
+                      >
+                        <Ionicons
+                          name="camera"
+                          size={20}
+                          color="#fff"
+                          style={styles.importIcon}
+                        />
+                        <Text style={styles.importButtonText}>
+                          Changer photo
+                        </Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.formSection}>
+                    <View style={styles.inputContainer}>
+                      <InputField
+                        value={form.id}
+                        onChangeText={(v) => handleChange("id", v)}
+                        placeholder="ID (8 chiffres)"
+                        editable={false}
+                        style={styles.input}
+                      />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <InputField
+                        value={form.nom}
+                        onChangeText={(v) => handleChange("nom", v)}
+                        placeholder="Nom"
+                        style={styles.input}
+                      />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <InputField
+                        value={form.prenom}
+                        onChangeText={(v) => handleChange("prenom", v)}
+                        placeholder="Prénom"
+                        style={styles.input}
+                      />
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.checkboxContainer}
+                      onPress={() => setEditPassword(!editPassword)}
+                      activeOpacity={0.8}
+                    >
+                      <BlurView intensity={15} style={styles.checkboxBlur}>
+                        <CheckBox
+                          checked={editPassword}
+                          onPress={() => setEditPassword(!editPassword)}
+                          containerStyle={styles.checkbox}
+                          checkedColor="#fff"
+                          uncheckedColor="rgba(255,255,255,0.7)"
+                        />
+                        <Text style={styles.checkboxLabel}>
+                          Modifier le mot de passe
+                        </Text>
+                      </BlurView>
+                    </TouchableOpacity>
+
+                    {editPassword && (
+                      <View style={styles.inputContainer}>
+                        <InputField
+                          value={form.password}
+                          onChangeText={(v) => handleChange("password", v)}
+                          placeholder="Nouveau mot de passe"
+                          secureTextEntry
+                          style={styles.input}
+                        />
+                      </View>
+                    )}
+
+                    <View style={styles.inputContainer}>
+                      <InputField
+                        value={form.adresse1}
+                        onChangeText={(v) => handleChange("adresse1", v)}
+                        placeholder="Adresse 1"
+                        style={styles.input}
+                      />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <InputField
+                        value={form.adresse2}
+                        onChangeText={(v) => handleChange("adresse2", v)}
+                        placeholder="Adresse 2"
+                        style={styles.input}
+                      />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <InputField
+                        value={form.numTel}
+                        onChangeText={(v) => handleChange("numTel", v)}
+                        placeholder="Téléphone"
+                        style={styles.input}
+                      />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <InputField
+                        value={form.numTelParentale}
+                        onChangeText={(v) => handleChange("numTelParentale", v)}
+                        placeholder="Téléphone Parentale"
+                        style={styles.input}
+                      />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <InputField
+                        value={form.location}
+                        onChangeText={(v) => handleChange("location", v)}
+                        placeholder="Site"
+                        style={styles.input}
+                      />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                      <InputField
+                        value={form.departement}
+                        onChangeText={(v) => handleChange("departement", v)}
+                        placeholder="Département"
+                        style={styles.input}
+                      />
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      onPress={handleSave}
+                      activeOpacity={0.8}
+                    >
+                      <LinearGradient
+                        colors={[
+                          "rgba(255,255,255,0.3)",
+                          "rgba(255,255,255,0.15)",
+                        ]}
+                        style={styles.saveButtonGradient}
+                      >
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={24}
+                          color="#fff"
+                          style={styles.saveIcon}
+                        />
+                        <Text style={styles.saveButtonText}>Enregistrer</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+                </LinearGradient>
+              </BlurView>
+            </Animated.View>
+          </ScrollView>
+        </LinearGradient>
+      </SafeAreaView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#1D2D51',
+    backgroundColor: "#667eea",
   },
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    paddingTop: Platform.OS === "ios" ? 15 : 25,
+  },
+  backButton: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    overflow: "hidden",
+  },
+  backButtonBlur: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+    fontFamily: Platform.OS === "ios" ? "Helvetica Neue" : "Roboto",
+  },
+  headerSpacer: {
+    width: 45,
+  },
   scrollContainer: {
     flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+  },
+  cardContainer: {
+    flex: 1,
+    marginTop: 20,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    width: '90%',
-    maxWidth: 400,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
+    flex: 1,
+    borderRadius: 25,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
   },
-  title: {
-    color: '#1D2D51',
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 20,
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
-    textAlign: 'center',
+  cardGradient: {
+    flex: 1,
+    padding: 25,
+  },
+  avatarSection: {
+    alignItems: "center",
+    marginBottom: 30,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#E8ECEF',
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#DDE1E6',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 20,
+    borderWidth: 3,
+    borderColor: "rgba(255,255,255,0.3)",
   },
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#E8ECEF',
-    marginBottom: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#DDE1E6',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    borderWidth: 3,
+    borderColor: "rgba(255,255,255,0.3)",
   },
-  avatarPlaceholderText: {
-    color: '#888',
-    fontSize: 14,
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+  importButton: {
+    borderRadius: 15,
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  importButtonGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  importIcon: {
+    marginRight: 8,
+  },
+  importButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+    fontFamily: Platform.OS === "ios" ? "Helvetica Neue" : "Roboto",
+  },
+  formSection: {
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 15,
   },
   input: {
+    backgroundColor: "rgba(255,255,255,0.15)",
     borderWidth: 1,
-    borderColor: '#DDE1E6',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: '#F8FAFD',
+    borderColor: "rgba(255,255,255,0.3)",
+    borderRadius: 15,
+    padding: 15,
     fontSize: 16,
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
-    color: '#1D2D51',
+    color: "#fff",
+    fontFamily: Platform.OS === "ios" ? "Helvetica Neue" : "Roboto",
+    placeholderTextColor: "rgba(255,255,255,0.7)",
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    alignSelf: 'flex-start',
+  checkboxContainer: {
+    marginBottom: 15,
+    borderRadius: 15,
+    overflow: "hidden",
+  },
+  checkboxBlur: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
   },
   checkbox: {
     padding: 0,
     margin: 0,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 0,
+    marginRight: 10,
   },
   checkboxLabel: {
-    color: '#1D2D51',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '500',
-    marginLeft: 8,
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+    fontWeight: "500",
+    fontFamily: Platform.OS === "ios" ? "Helvetica Neue" : "Roboto",
   },
-  importButton: {
-    backgroundColor: '#4f8cff',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginBottom: 16,
-    alignItems: 'center',
-    width: '80%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+  saveButton: {
+    marginTop: 20,
+    borderRadius: 20,
+    overflow: "hidden",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
-  importButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+  saveButtonGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 18,
+    paddingHorizontal: 30,
   },
-  button: {
-    backgroundColor: '#1D2D51',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    marginTop: 16,
-    width: '80%',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+  saveIcon: {
+    marginRight: 10,
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+  saveButtonText: {
+    color: "#fff",
+    fontWeight: "700",
     fontSize: 18,
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica Neue' : 'Roboto',
+    fontFamily: Platform.OS === "ios" ? "Helvetica Neue" : "Roboto",
   },
 });
 

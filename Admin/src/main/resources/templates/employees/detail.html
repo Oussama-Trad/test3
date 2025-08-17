@@ -1,39 +1,683 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Détail employé</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-<div class="admin-layout">
-    <div th:replace="~{fragments/navbar :: sidebar}"></div>
-    <main class="main-content">
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .admin-layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .main-content {
+        flex: 1;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 20px auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        font-size: 2.8rem;
+        opacity: 0.9;
+      }
+
+      .employee-detail {
+        padding: 40px;
+      }
+
+      .profile-section {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        margin-bottom: 40px;
+        padding: 30px;
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      .profile-image {
+        position: relative;
+      }
+
+      .profile-image img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid white;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease;
+      }
+
+      .profile-image:hover img {
+        transform: scale(1.05);
+      }
+
+      .profile-image::after {
+        content: "";
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        right: -5px;
+        bottom: -5px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        z-index: -1;
+        opacity: 0.8;
+      }
+
+      .profile-basic {
+        flex: 1;
+      }
+
+      .employee-name {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .employee-id {
+        font-size: 1.2rem;
+        color: #667eea;
+        font-weight: 600;
+        background: rgba(102, 126, 234, 0.1);
+        padding: 8px 16px;
+        border-radius: 25px;
+        display: inline-block;
+        margin-bottom: 15px;
+      }
+
+      .quick-info {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      .quick-info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6c757d;
+        font-weight: 500;
+      }
+
+      .quick-info-item i {
+        color: #667eea;
+        width: 16px;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 40px;
+      }
+
+      .detail-section {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e1e8ed;
+        animation: fadeInUp 0.6s ease-out;
+        animation-fill-mode: both;
+      }
+
+      .detail-section:nth-child(1) {
+        animation-delay: 0.1s;
+      }
+      .detail-section:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .detail-section:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      .detail-section:nth-child(4) {
+        animation-delay: 0.4s;
+      }
+
+      .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f8f9fa;
+      }
+
+      .section-title i {
+        color: #667eea;
+        font-size: 1.4rem;
+      }
+
+      .detail-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f3f4;
+        transition: background-color 0.2s ease;
+      }
+
+      .detail-item:last-child {
+        border-bottom: none;
+      }
+
+      .detail-item:hover {
+        background-color: rgba(102, 126, 234, 0.02);
+        border-radius: 8px;
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .detail-label {
+        font-weight: 600;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .detail-label i {
+        color: #667eea;
+        width: 16px;
+        font-size: 0.9rem;
+      }
+
+      .detail-value {
+        color: #2c3e50;
+        font-weight: 500;
+        text-align: right;
+      }
+
+      .detail-value.empty {
+        color: #6c757d;
+        font-style: italic;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        padding: 30px 0;
+        border-top: 1px solid #e1e8ed;
+        animation: fadeInUp 0.6s ease-out 0.5s both;
+      }
+
+      .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-danger {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+      }
+
+      .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+      }
+
+      .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+      }
+
+      .delete-form {
+        display: inline;
+      }
+
+      .metadata-section {
+        grid-column: 1 / -1;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      }
+
+      @media (max-width: 768px) {
+        .admin-layout {
+          flex-direction: column;
+        }
+
+        .container {
+          margin: 15px;
+          border-radius: 15px;
+        }
+
+        .header h2 {
+          font-size: 2rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .employee-detail {
+          padding: 25px;
+        }
+
+        .profile-section {
+          flex-direction: column;
+          text-align: center;
+          gap: 20px;
+        }
+
+        .quick-info {
+          justify-content: center;
+        }
+
+        .details-grid {
+          grid-template-columns: 1fr;
+          gap: 20px;
+        }
+
+        .action-buttons {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .detail-item {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 5px;
+        }
+
+        .detail-value {
+          text-align: left;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-layout">
+      <div th:replace="~{fragments/navbar :: sidebar}"></div>
+      <main class="main-content">
         <div class="container">
-            <h2>Détail de l'employé</h2>
-            <div class="employee-detail">
-                <img th:src="${employee.photoDeProfil}" alt="Profil" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
-                <ul>
-                    <li><b>Nom :</b> <span th:text="${employee.nom}"></span></li>
-                    <li><b>Prénom :</b> <span th:text="${employee.prenom}"></span></li>
-                    <li><b>ID :</b> <span th:text="${employee.id}"></span></li>
-                    <li><b>Adresse 1 :</b> <span th:text="${employee.adresse1}"></span></li>
-                    <li><b>Adresse 2 :</b> <span th:text="${employee.adresse2}"></span></li>
-                    <li><b>Téléphone :</b> <span th:text="${employee.numTel}"></span></li>
-                    <li><b>Téléphone parentale :</b> <span th:text="${employee.numTelParentale}"></span></li>
-                    <li><b>Location :</b> <span th:text="${locationMap[employee.locationId] != null ? locationMap[employee.locationId] : employee.locationId}"></span></li>
-                    <li><b>Département :</b> <span th:text="${departementMap[employee.departementId] != null ? departementMap[employee.departementId] : employee.departementId}"></span></li>
-                    <li><b>Créé le :</b> <span th:text="${#dates.format(employee.createdAt, 'dd/MM/yyyy HH:mm')}"></span></li>
-                    <li><b>Modifié le :</b> <span th:text="${#dates.format(employee.updatedAt, 'dd/MM/yyyy HH:mm')}"></span></li>
-                </ul>
-                <a th:href="@{'/employees/' + ${employee._id} + '/edit'}" class="btn">Modifier</a>
-                <form th:action="@{'/employees/' + ${employee._id} + '/delete'}" method="post" style="display:inline;">
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Supprimer cet employé ?')">Supprimer</button>
-                </form>
-                <a th:href="@{/employees}" class="btn">Retour à la liste</a>
+          <div class="header">
+            <h2>
+              <i class="fas fa-user-circle"></i>
+              Détail de l'employé
+            </h2>
+          </div>
+
+          <div class="employee-detail">
+            <div class="profile-section">
+              <div class="profile-image">
+                <img th:src="${employee.photoDeProfil}" alt="Profil" />
+              </div>
+              <div class="profile-basic">
+                <div class="employee-name">
+                  <i class="fas fa-user"></i>
+                  <span
+                    th:text="${employee.prenom + ' ' + employee.nom}"
+                  ></span>
+                </div>
+                <div class="employee-id">
+                  <i class="fas fa-id-card"></i>
+                  <span th:text="${employee.id}"></span>
+                </div>
+                <div class="quick-info">
+                  <div class="quick-info-item">
+                    <i class="fas fa-phone"></i>
+                    <span th:text="${employee.numTel}"></span>
+                  </div>
+                  <div class="quick-info-item">
+                    <i class="fas fa-building"></i>
+                    <span
+                      th:text="${locationMap[employee.locationId] != null ? locationMap[employee.locationId] : employee.locationId}"
+                    ></span>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <div class="details-grid">
+              <div class="detail-section">
+                <h3 class="section-title">
+                  <i class="fas fa-address-card"></i>
+                  Informations personnelles
+                </h3>
+                <ul class="detail-list">
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-user"></i>
+                      Nom :
+                    </span>
+                    <span class="detail-value" th:text="${employee.nom}"></span>
+                  </li>
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-user"></i>
+                      Prénom :
+                    </span>
+                    <span
+                      class="detail-value"
+                      th:text="${employee.prenom}"
+                    ></span>
+                  </li>
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-id-card"></i>
+                      ID :
+                    </span>
+                    <span class="detail-value" th:text="${employee.id}"></span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="detail-section">
+                <h3 class="section-title">
+                  <i class="fas fa-phone"></i>
+                  Contact
+                </h3>
+                <ul class="detail-list">
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-phone"></i>
+                      Téléphone :
+                    </span>
+                    <span
+                      class="detail-value"
+                      th:text="${employee.numTel}"
+                    ></span>
+                  </li>
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-phone-alt"></i>
+                      Tél. parentale :
+                    </span>
+                    <span
+                      class="detail-value"
+                      th:text="${employee.numTelParentale ?: 'Non renseigné'}"
+                      th:classappend="${employee.numTelParentale == null or employee.numTelParentale == ''} ? 'empty' : ''"
+                    ></span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="detail-section">
+                <h3 class="section-title">
+                  <i class="fas fa-map-marker-alt"></i>
+                  Adresses
+                </h3>
+                <ul class="detail-list">
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-home"></i>
+                      Adresse 1 :
+                    </span>
+                    <span
+                      class="detail-value"
+                      th:text="${employee.adresse1 ?: 'Non renseignée'}"
+                      th:classappend="${employee.adresse1 == null or employee.adresse1 == ''} ? 'empty' : ''"
+                    ></span>
+                  </li>
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-home"></i>
+                      Adresse 2 :
+                    </span>
+                    <span
+                      class="detail-value"
+                      th:text="${employee.adresse2 ?: 'Non renseignée'}"
+                      th:classappend="${employee.adresse2 == null or employee.adresse2 == ''} ? 'empty' : ''"
+                    ></span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="detail-section">
+                <h3 class="section-title">
+                  <i class="fas fa-briefcase"></i>
+                  Affectation
+                </h3>
+                <ul class="detail-list">
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-map-marker-alt"></i>
+                      Location :
+                    </span>
+                    <span
+                      class="detail-value"
+                      th:text="${locationMap[employee.locationId] != null ? locationMap[employee.locationId] : employee.locationId}"
+                    ></span>
+                  </li>
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-users"></i>
+                      Département :
+                    </span>
+                    <span
+                      class="detail-value"
+                      th:text="${departementMap[employee.departementId] != null ? departementMap[employee.departementId] : employee.departementId}"
+                    ></span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="detail-section metadata-section">
+                <h3 class="section-title">
+                  <i class="fas fa-clock"></i>
+                  Métadonnées
+                </h3>
+                <ul class="detail-list">
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-plus-circle"></i>
+                      Créé le :
+                    </span>
+                    <span
+                      class="detail-value"
+                      th:text="${#dates.format(employee.createdAt, 'dd/MM/yyyy HH:mm')}"
+                    ></span>
+                  </li>
+                  <li class="detail-item">
+                    <span class="detail-label">
+                      <i class="fas fa-edit"></i>
+                      Modifié le :
+                    </span>
+                    <span
+                      class="detail-value"
+                      th:text="${#dates.format(employee.updatedAt, 'dd/MM/yyyy HH:mm')}"
+                    ></span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="action-buttons">
+              <a
+                th:href="@{'/employees/' + ${employee._id} + '/edit'}"
+                class="btn btn-primary"
+              >
+                <i class="fas fa-edit"></i>
+                Modifier
+              </a>
+              <form
+                th:action="@{'/employees/' + ${employee._id} + '/delete'}"
+                method="post"
+                class="delete-form"
+              >
+                <button
+                  type="submit"
+                  class="btn btn-danger"
+                  onclick="return confirm('Supprimer cet employé ?')"
+                >
+                  <i class="fas fa-trash"></i>
+                  Supprimer
+                </button>
+              </form>
+              <a th:href="@{/employees}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Retour à la liste
+              </a>
+            </div>
+          </div>
         </div>
-    </main>
-</div>
-</body>
+      </main>
+    </div>
+  </body>
 </html>

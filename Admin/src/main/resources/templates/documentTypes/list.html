@@ -1,44 +1,543 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Types de documents</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-<div class="admin-layout">
-    <div th:replace="~{fragments/navbar :: sidebar}"></div>
-    <main class="main-content">
+    <link rel="stylesheet" href="/css/style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .admin-layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .main-content {
+        flex: 1;
+        padding: 20px;
+        overflow-x: auto;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        animation: slideIn 0.6s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px 20px 0 0;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: none;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(102, 126, 234, 0.1) 0%,
+          transparent 70%
+        );
+        animation: shimmer 4s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+      }
+
+      .header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .header i {
+        color: #667eea;
+        font-size: 2.8rem;
+      }
+
+      .actions-bar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .stats {
+        color: #666;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .table-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 0 0 20px 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+      }
+
+      thead {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+      }
+
+      th {
+        padding: 20px 15px;
+        text-align: left;
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 1rem;
+        border-bottom: 2px solid #e1e8ed;
+        position: relative;
+      }
+
+      th i {
+        margin-right: 8px;
+        color: #667eea;
+        width: 20px;
+      }
+
+      tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f1f3f4;
+      }
+
+      tbody tr:hover {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 100%);
+        transform: scale(1.01);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      }
+
+      td {
+        padding: 20px 15px;
+        vertical-align: middle;
+        color: #2c3e50;
+      }
+
+      .doc-title {
+        font-weight: 600;
+        color: #667eea;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .doc-title i {
+        color: #667eea;
+        font-size: 1.2rem;
+      }
+
+      .doc-description {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #666;
+        line-height: 1.4;
+        font-style: italic;
+      }
+
+      .empty-description {
+        color: #999;
+        font-style: italic;
+      }
+
+      .date-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .date-main {
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .date-time {
+        font-size: 0.85rem;
+        color: #666;
+      }
+
+      .creator-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: linear-gradient(135deg, #e8ecff 0%, #d8e2ff 100%);
+        border-radius: 20px;
+        font-weight: 500;
+        color: #667eea;
+        max-width: 150px;
+      }
+
+      .creator-info i {
+        font-size: 1rem;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn:hover::before {
+        left: 100%;
+      }
+
+      .btn-success {
+        background: linear-gradient(135deg, #48cae4 0%, #0077b6 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(72, 202, 228, 0.3);
+      }
+
+      .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(72, 202, 228, 0.4);
+      }
+
+      .btn-small {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-small::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn-small:hover::before {
+        left: 100%;
+      }
+
+      .btn-small {
+        background: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+        color: white;
+      }
+
+      .btn-small:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(247, 37, 133, 0.3);
+      }
+
+      .btn-danger {
+        background: linear-gradient(
+          135deg,
+          #dc3545 0%,
+          #c82333 100%
+        ) !important;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3) !important;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+      }
+
+      .empty-state i {
+        font-size: 4rem;
+        color: #ccc;
+        margin-bottom: 20px;
+      }
+
+      .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #2c3e50;
+      }
+
+      .empty-state p {
+        margin-bottom: 20px;
+      }
+
+      @media (max-width: 1024px) {
+        .table-container {
+          overflow-x: auto;
+        }
+
+        .table {
+          min-width: 800px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .admin-layout {
+          flex-direction: column;
+        }
+
+        .main-content {
+          padding: 15px;
+        }
+
+        .header h2 {
+          font-size: 2rem;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .actions-bar {
+          flex-direction: column;
+          gap: 15px;
+          text-align: center;
+        }
+
+        .actions {
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .btn-small {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-layout">
+      <div th:replace="~{fragments/navbar :: sidebar}"></div>
+      <main class="main-content">
         <div class="container">
-            <h2>Types de documents</h2>
-            <a th:href="@{/document-types/create}" class="btn">Ajouter un type</a>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Titre</th>
-                        <th>Description</th>
-                        <th>Date de création</th>
-                        <th>Créé par</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="docType : ${documentTypes}">
-                        <td th:text="${docType.titre}"></td>
-                        <td th:text="${docType.description}"></td>
-                        <td th:text="${#temporals.format(docType.dateCreation, 'dd/MM/yyyy HH:mm')}"></td>
-                        <td th:text="${docType.createdBy}"></td>
-                        <td>
-                            <a th:href="@{'/document-types/' + ${docType.id} + '/edit'}" class="btn-small">Modifier</a>
-                            <form th:action="@{'/document-types/' + ${docType.id} + '/delete'}" method="post" style="display:inline;">
-                                <button type="submit" class="btn-small btn-danger" onclick="return confirm('Supprimer ce type ?')">Supprimer</button>
-                            </form>
-                        </td>
-                    </tr>
-                </tbody>
+          <div class="header">
+            <h2>
+              <i class="fas fa-file-alt"></i>
+              Types de documents
+            </h2>
+          </div>
+
+          <div class="actions-bar">
+            <div class="stats">
+              <i class="fas fa-info-circle"></i>
+              <span
+                th:text="${#lists.size(documentTypes)} + ' type(s) de document(s)'"
+              ></span>
+            </div>
+            <a th:href="@{/document-types/create}" class="btn btn-success">
+              <i class="fas fa-plus"></i>
+              Ajouter un type
+            </a>
+          </div>
+
+          <div class="table-container">
+            <table class="table" th:if="${not #lists.isEmpty(documentTypes)}">
+              <thead>
+                <tr>
+                  <th><i class="fas fa-heading"></i> Titre</th>
+                  <th><i class="fas fa-align-left"></i> Description</th>
+                  <th><i class="fas fa-calendar-plus"></i> Date de création</th>
+                  <th><i class="fas fa-user"></i> Créé par</th>
+                  <th><i class="fas fa-cogs"></i> Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="docType : ${documentTypes}">
+                  <td>
+                    <div
+                      class="doc-title"
+                      th:text="${docType.titre}"
+                      th:title="${docType.titre}"
+                    >
+                      <i class="fas fa-file-alt"></i>
+                    </div>
+                  </td>
+                  <td>
+                    <div
+                      th:if="${docType.description != null and !#strings.isEmpty(docType.description)}"
+                      class="doc-description"
+                      th:text="${docType.description}"
+                      th:title="${docType.description}"
+                    ></div>
+                    <div
+                      th:unless="${docType.description != null and !#strings.isEmpty(docType.description)}"
+                      class="empty-description"
+                    >
+                      Aucune description
+                    </div>
+                  </td>
+                  <td>
+                    <div class="date-info">
+                      <span
+                        class="date-main"
+                        th:text="${#temporals.format(docType.dateCreation, 'dd/MM/yyyy')}"
+                      ></span>
+                      <span
+                        class="date-time"
+                        th:text="${#temporals.format(docType.dateCreation, 'HH:mm')}"
+                      ></span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="creator-info">
+                      <i class="fas fa-user-circle"></i>
+                      <span th:text="${docType.createdBy}"></span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <a
+                        th:href="@{'/document-types/' + ${docType.id} + '/edit'}"
+                        class="btn-small"
+                      >
+                        <i class="fas fa-edit"></i>
+                        Modifier
+                      </a>
+                      <form
+                        th:action="@{'/document-types/' + ${docType.id} + '/delete'}"
+                        method="post"
+                        style="display: inline"
+                      >
+                        <button
+                          type="submit"
+                          class="btn-small btn-danger"
+                          onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce type de document ?')"
+                        >
+                          <i class="fas fa-trash"></i>
+                          Supprimer
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
             </table>
+
+            <div th:if="${#lists.isEmpty(documentTypes)}" class="empty-state">
+              <i class="fas fa-file-alt"></i>
+              <h3>Aucun type de document</h3>
+              <p>Aucun type de document n'a été créé pour le moment.</p>
+              <a th:href="@{/document-types/create}" class="btn btn-success">
+                <i class="fas fa-plus"></i>
+                Créer le premier type
+              </a>
+            </div>
+          </div>
         </div>
-    </main>
-</div>
-</body>
+      </main>
+    </div>
+  </body>
 </html>
