@@ -14,6 +14,7 @@ import EventDetailScreen from './views/screens/EventDetailScreen';
 import ChatServiceScreen from './views/screens/ChatServiceScreen';
 import ChatConversation from './views/screens/ChatConversation';
 import HomeScreen from './views/screens/HomeScreen';
+import PartenariatsScreen from './views/screens/PartenariatsScreen';
 import { UserProvider, UserContext } from './context/UserContext';
 import React, { useContext } from 'react';
 
@@ -43,7 +44,8 @@ function MainTabs() {
           else if (route.name === 'Documents') iconName = 'document';
           else if (route.name === 'Mon Profil') iconName = 'person';
           else if (route.name === 'Messagerie') iconName = 'chatbubble';
-      else if (route.name === 'Congés') iconName = 'calendar';
+  else if (route.name === 'Congés') iconName = 'calendar';
+  else if (route.name === 'Partenariats') iconName = 'handshake';
           else iconName = 'home';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -55,12 +57,13 @@ function MainTabs() {
         tabBarStyle: { backgroundColor: '#fff' },
       })}
     >
-      <Tab.Screen name="Actualités" component={ActualitesScreen} />
-      <Tab.Screen name="Documents" component={DocumentScreen} />
-    <Tab.Screen name="Congés" component={MyLeavesScreen} />
-      <Tab.Screen name="Mon Profil" component={ProfileScreen} />
+  <Tab.Screen name="Actualités" component={ActualitesScreen} />
+  <Tab.Screen name="Documents" component={DocumentScreen} />
+  <Tab.Screen name="Partenariats" component={PartenariatsScreen} />
+  <Tab.Screen name="Congés" component={MyLeavesScreen} />
+  <Tab.Screen name="Mon Profil" component={ProfileScreen} />
   <Tab.Screen name="Messagerie" component={ConversationsScreen} />
-    <Tab.Screen name="Événements" component={EventsScreen} />
+  <Tab.Screen name="Événements" component={EventsScreen} />
     </Tab.Navigator>
   );
 }

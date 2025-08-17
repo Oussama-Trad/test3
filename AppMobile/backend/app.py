@@ -34,6 +34,17 @@ app.register_blueprint(documents_bp)
 app.register_blueprint(actualites_bp)
 app.register_blueprint(bp_events)
 
+# --- ROUTE PARTENARIATS (MOBILE) ---
+@app.route('/api/partenariats', methods=['GET'])
+def get_partenariats():
+    try:
+        partenariats = list(db.partenariat.find())
+        for p in partenariats:
+            p['_id'] = str(p['_id'])
+            p.pop('_class', None)
+        return jsonify(partenariats), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Nouvelle route pour lister les conversations d'un employé (mobile)
 @app.route('/api/leave-requests', methods=['POST'])
