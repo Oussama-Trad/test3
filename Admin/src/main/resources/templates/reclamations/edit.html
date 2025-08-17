@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Répondre à la réclamation</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<h2 th:text="'Réclamation : ' + ${reclamation.titre}"></h2>
+<p><strong>Description :</strong> <span th:text="${reclamation.description}"></span></p>
+<p><strong>Pièce jointe :</strong>
+    <a th:if="${reclamation.piece_jointe}" th:href="@{'/' + ${reclamation.piece_jointe}}" target="_blank">Voir</a>
+    <span th:if="${reclamation.piece_jointe} == ''">Aucune</span>
+</p>
+<p><strong>Statut actuel :</strong> <span th:text="${reclamation.statut}"></span></p>
+<p><strong>Date :</strong> <span th:text="${reclamation.date}"></span></p>
+<form th:action="@{'/reclamations/update/' + ${reclamation.id}}" method="post">
+    <label for="statut">Nouveau statut :</label>
+    <select name="statut" id="statut">
+        <option th:selected="${reclamation.statut == 'En attente'}">En attente</option>
+        <option th:selected="${reclamation.statut == 'En cours'}">En cours</option>
+        <option th:selected="${reclamation.statut == 'Résolue'}">Résolue</option>
+        <option th:selected="${reclamation.statut == 'Refusée'}">Refusée</option>
+    </select>
+    <button type="submit">Mettre à jour</button>
+</form>
+<a th:href="@{'/reclamations'}">Retour à la liste</a>
+</body>
+</html>

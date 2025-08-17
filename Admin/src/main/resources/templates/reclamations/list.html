@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des réclamations</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<h2>Liste des réclamations</h2>
+<table border="1">
+    <thead>
+    <tr>
+        <th>Titre</th>
+        <th>Description</th>
+        <th>Pièce jointe</th>
+        <th>Statut</th>
+        <th>Date</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="reclamation : ${reclamations}">
+        <td th:text="${reclamation.titre}"></td>
+        <td th:text="${reclamation.description}"></td>
+        <td>
+            <a th:if="${reclamation.piece_jointe}" th:href="@{'/' + ${reclamation.piece_jointe}}" target="_blank">Voir</a>
+        </td>
+        <td th:text="${reclamation.statut}"></td>
+        <td th:text="${reclamation.date}"></td>
+        <td>
+            <a th:href="@{'/reclamations/edit/' + ${reclamation.id}}">Répondre / Modifier</a>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
