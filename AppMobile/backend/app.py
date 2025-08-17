@@ -16,10 +16,16 @@ from auth_utils import token_required
 from documents import bp as documents_bp
 from actualites import bp as actualites_bp
 
+# Pour l'upload de fichiers
+from werkzeug.utils import secure_filename
+
 # Connexion à la collection messages
 client = MongoClient('mongodb+srv://oussamatrzd19:oussama123@leoniapp.grhnzgz.mongodb.net/')
 db = client['DBLEONI']
 messages_collection = db['messages']
+
+# Connexion à la collection reclamations
+reclamations_collection = db['reclamations']
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {
@@ -28,6 +34,15 @@ CORS(app, resources={r"/*": {
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }}, supports_credentials=True)
 app.config['SECRET_KEY'] = '123'  # JWT_SECRET_KEY
+
+# Config dossier upload
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # --- BLUEPRINTS ---
 app.register_blueprint(documents_bp)
@@ -43,6 +58,85 @@ def get_partenariats():
             p['_id'] = str(p['_id'])
             p.pop('_class', None)
         return jsonify(partenariats), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# --- ROUTES RECLAMATIONS (MOBILE) ---
+# Créer une réclamation
+
+# Upload de pièce jointe pour réclamation
+@app.route('/api/reclamations/upload', methods=['POST'])
+def upload_piece_jointe():
+    if 'file' not in request.files:
+        return jsonify({'error': 'Aucun fichier envoyé'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Nom de fichier vide'}), 400
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        # Retourner le chemin relatif pour stockage dans la réclamation
+        return jsonify({'piece_jointe': f'uploads/{filename}'}), 200
+    else:
+        return jsonify({'error': 'Type de fichier non autorisé'}), 400
+
+# Créer une réclamation (accepte piece_jointe en option)
+@app.route('/api/reclamations', methods=['POST'])
+def create_reclamation():
+    try:
+        data = request.get_json()
+        required_fields = ['titre', 'description', 'employeId', 'locationId', 'departementId']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'Missing field: {field}'}), 400
+        reclamation = {
+            'titre': data['titre'],
+            'description': data['description'],
+            'piece_jointe': data.get('piece_jointe', ''),
+            'statut': 'En attente',
+            'date': datetime.utcnow(),
+            'employeId': data['employeId'],
+            'locationId': data['locationId'],
+            'departementId': data['departementId']
+        }
+        result = reclamations_collection.insert_one(reclamation)
+        reclamation['_id'] = str(result.inserted_id)
+        return jsonify(reclamation), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Lister les réclamations (filtrage possible par employé)
+@app.route('/api/reclamations', methods=['GET'])
+def get_reclamations():
+    try:
+        employe_id = request.args.get('employeId')
+        query = {}
+        if employe_id:
+            query['employeId'] = employe_id
+        reclamations = list(reclamations_collection.find(query).sort('date', -1))
+        for r in reclamations:
+            r['_id'] = str(r['_id'])
+        return jsonify(reclamations), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Modifier le statut d'une réclamation (admin)
+from bson import ObjectId
+@app.route('/api/reclamations/<reclamation_id>/statut', methods=['PUT'])
+def update_reclamation_statut(reclamation_id):
+    try:
+        data = request.get_json()
+        nouveau_statut = data.get('statut')
+        if not nouveau_statut:
+            return jsonify({'error': 'Champ "statut" manquant'}), 400
+        result = reclamations_collection.update_one(
+            {'_id': ObjectId(reclamation_id)},
+            {'$set': {'statut': nouveau_statut}}
+        )
+        if result.matched_count == 0:
+            return jsonify({'error': 'Réclamation non trouvée'}), 404
+        return jsonify({'success': True, 'message': 'Statut mis à jour'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -147,10 +241,18 @@ def get_locations_full():
     locations = list(location_collection.find({}, {'_id': 1, 'nom': 1}))
     return jsonify([{'id': str(loc['_id']), 'nom': loc['nom']} for loc in locations])
 
+
 @app.route('/api/departments-full', methods=['GET'])
 def get_departments_full():
-    departements = list(departement_collection.find({}, {'_id': 1, 'nom': 1}))
-    return jsonify([{'id': str(dep['_id']), 'nom': dep['nom']} for dep in departements])
+    departements = list(departement_collection.find({}, {'_id': 1, 'nom': 1, 'locationId': 1}))
+    return jsonify([
+        {
+            'id': str(dep['_id']),
+            'nom': dep['nom'],
+            'locationId': str(dep.get('locationId', ''))
+        }
+        for dep in departements
+    ])
 
 @app.route('/api/register', methods=['POST'])
 def register():
