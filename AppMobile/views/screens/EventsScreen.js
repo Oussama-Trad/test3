@@ -16,13 +16,12 @@ import {
   RefreshControl,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { UserContext } from "../../context/UserContext";
 
 const { width, height } = Dimensions.get("window");
-const API_URL = "http://localhost:5000/api/events";
+const API_URL = "http://172.20.10.2:5000/api/events";
 
 const EventsScreen = () => {
   const navigation = useNavigation();
@@ -108,7 +107,14 @@ const EventsScreen = () => {
       if (!response.ok) throw new Error("Erreur API");
 
       const data = await response.json();
-      setEvents(data);
+      // Correction : accepte les deux formats de réponse (data.events ou data)
+      if (Array.isArray(data.events)) {
+        setEvents(data.events);
+      } else if (Array.isArray(data)) {
+        setEvents(data);
+      } else {
+        setEvents([]);
+      }
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -117,6 +123,14 @@ const EventsScreen = () => {
       setRefreshing(false);
     }
   };
+
+  // Correction : recharge les events à chaque fois que l'écran devient actif (utile pour Expo)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchEvents();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     fetchEvents();
@@ -221,25 +235,25 @@ const EventsScreen = () => {
 
   const renderHeader = () => (
     <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
-      <BlurView intensity={95} tint="light" style={styles.headerBlur}>
-        <Text style={styles.headerTitle}>🎉 Événements</Text>
-        <Text style={styles.headerSubtitle}>
-          {user?.locationId || "Site"} • {user?.departementId || "Département"}
-        </Text>
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{filteredEvents.length}</Text>
-            <Text style={styles.statLabel}>Événements</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>
-              {filteredEvents.filter((e) => isEventToday(e.startDate)).length}
-            </Text>
-            <Text style={styles.statLabel}>Aujourd'hui</Text>
+        <View style={[styles.headerBlur, { backgroundColor: '#fff', borderRadius: 24, padding: 20, margin: 10, elevation: 2 }]}> 
+          <Text style={styles.headerTitle}>🎉 Événements</Text>
+          <Text style={styles.headerSubtitle}>
+            {user?.locationId || "Site"} • {user?.departementId || "Département"}
+          </Text>
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{filteredEvents.length}</Text>
+              <Text style={styles.statLabel}>Événements</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>
+                {filteredEvents.filter((e) => isEventToday(e.startDate)).length}
+              </Text>
+              <Text style={styles.statLabel}>Aujourd'hui</Text>
+            </View>
           </View>
         </View>
-      </BlurView>
     </Animated.View>
   );
 
@@ -253,7 +267,7 @@ const EventsScreen = () => {
         },
       ]}
     >
-      <BlurView intensity={90} tint="light" style={styles.searchBlur}>
+        <View style={[styles.searchBlur, { borderRadius: 20, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.2)" }]}>
         <View style={styles.searchInputContainer}>
           <Ionicons
             name="search"
@@ -277,7 +291,7 @@ const EventsScreen = () => {
             </TouchableOpacity>
           ) : null}
         </View>
-      </BlurView>
+        </View>
     </Animated.View>
   );
 
@@ -386,7 +400,7 @@ const EventsScreen = () => {
           onPress={() => navigation.navigate("EventDetail", { event: item })}
           activeOpacity={0.8}
         >
-          <BlurView intensity={95} tint="light" style={styles.eventCardBlur}>
+          <View style={[styles.eventCardBlur, { backgroundColor: '#fff', borderRadius: 20, padding: 16, elevation: 2 }]}> 
             <View style={styles.eventCardContent}>
               {/* Badge de statut */}
               {(isToday || isSoon) && (
@@ -489,7 +503,7 @@ const EventsScreen = () => {
                 </TouchableOpacity>
               </View>
             </View>
-          </BlurView>
+          </View>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -569,14 +583,12 @@ const EventsScreen = () => {
             onPress={() => fetchEvents()}
             activeOpacity={0.8}
           >
-            <BlurView
-              intensity={90}
-              tint="light"
+            <View
               style={styles.retryButtonBlur}
             >
               <Ionicons name="refresh" size={20} color="#667eea" />
               <Text style={styles.retryButtonText}>Réessayer</Text>
-            </BlurView>
+            </View>
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -727,7 +739,7 @@ const styles = StyleSheet.create({
     right: width * 0.2,
   },
   header: {
-    paddingTop: Platform.OS === "ios" ? 50 : StatusBar.currentHeight + 20,
+    
     paddingHorizontal: 20,
     paddingBottom: 20,
     zIndex: 10,
@@ -744,14 +756,12 @@ const styles = StyleSheet.create({
     color: "#1a1a1a",
     textAlign: "center",
     marginBottom: 8,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Display" : "Roboto",
   },
   headerSubtitle: {
     fontSize: 16,
     color: "#666666",
     textAlign: "center",
     marginBottom: 20,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   statsContainer: {
     flexDirection: "row",
@@ -766,12 +776,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
     color: "#667eea",
-    fontFamily: Platform.OS === "ios" ? "SF Pro Display" : "Roboto",
   },
   statLabel: {
     fontSize: 14,
     color: "#666666",
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   statDivider: {
     width: 1,
@@ -803,7 +811,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: "#1a1a1a",
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   clearButton: {
     padding: 5,
@@ -840,7 +847,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginLeft: 6,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   filterChipTextActive: {
     color: "#FFFFFF",
@@ -889,7 +895,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     marginLeft: 4,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   eventImageContainer: {
     position: "relative",
@@ -923,7 +928,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     marginLeft: 4,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   eventTextContent: {
     padding: 20,
@@ -934,7 +938,6 @@ const styles = StyleSheet.create({
     color: "#1a1a1a",
     marginBottom: 12,
     lineHeight: 26,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Display" : "Roboto",
   },
   eventDateContainer: {
     flexDirection: "row",
@@ -946,7 +949,6 @@ const styles = StyleSheet.create({
     color: "#667eea",
     marginLeft: 6,
     fontWeight: "500",
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   eventLocation: {
     flexDirection: "row",
@@ -958,7 +960,6 @@ const styles = StyleSheet.create({
     color: "#4facfe",
     marginLeft: 6,
     fontWeight: "500",
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   viewButton: {
     borderRadius: 15,
@@ -981,7 +982,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginRight: 8,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   emptyContainer: {
     flex: 1,
@@ -1003,7 +1003,6 @@ const styles = StyleSheet.create({
     color: "#1a1a1a",
     marginBottom: 10,
     textAlign: "center",
-    fontFamily: Platform.OS === "ios" ? "SF Pro Display" : "Roboto",
   },
   emptySubtitle: {
     fontSize: 16,
@@ -1011,7 +1010,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
     marginBottom: 20,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   clearSearchButton: {
     backgroundColor: "rgba(255, 255, 255, 0.8)",
@@ -1025,7 +1023,6 @@ const styles = StyleSheet.create({
     color: "#667eea",
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   loadingContainer: {
     flex: 1,
@@ -1044,13 +1041,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFFFFF",
     marginTop: 20,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Display" : "Roboto",
   },
   loadingSubtext: {
     fontSize: 16,
     color: "rgba(255, 255, 255, 0.8)",
     marginTop: 8,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   errorContainer: {
     flex: 1,
@@ -1079,21 +1074,18 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginBottom: 10,
     textAlign: "center",
-    fontFamily: Platform.OS === "ios" ? "SF Pro Display" : "Roboto",
   },
   errorText: {
     fontSize: 16,
     color: "rgba(255, 255, 255, 0.9)",
     textAlign: "center",
     marginBottom: 20,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   errorDebug: {
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.7)",
     textAlign: "center",
     marginBottom: 5,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
   retryButton: {
     borderRadius: 20,
@@ -1107,13 +1099,14 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.3)",
+    backgroundColor: '#fff',
+    borderRadius: 20,
   },
   retryButtonText: {
     color: "#667eea",
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
-    fontFamily: Platform.OS === "ios" ? "SF Pro Text" : "Roboto",
   },
 });
 

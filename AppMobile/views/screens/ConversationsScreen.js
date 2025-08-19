@@ -62,7 +62,7 @@ const ConversationsScreen = ({ navigation }) => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/conversations?employeeId=${user.id}`
+        `http://172.20.10.2:5000/api/conversations?employeeId=${user.id}`
       );
       const data = await res.json();
       setConversations(data);

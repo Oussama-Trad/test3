@@ -82,7 +82,7 @@ const ChatServiceScreen = ({ navigation }) => {
 
   const fetchLocations = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/locations-full");
+      const res = await fetch("http://172.20.10.2:5000/api/locations-full");
       const data = await res.json();
       setLocations(data);
     } catch (e) {
@@ -93,7 +93,7 @@ const ChatServiceScreen = ({ navigation }) => {
 
   const fetchDepartements = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/departments-full");
+      const res = await fetch("http://172.20.10.2:5000/api/departments-full");
       const data = await res.json();
       setDepartements(data);
     } catch (e) {
@@ -105,7 +105,7 @@ const ChatServiceScreen = ({ navigation }) => {
   const fetchAdmins = async () => {
     if (!refreshing) setLoading(true);
 
-    let url = "http://localhost:5000/api/admins";
+    let url = "http://172.20.10.2:5000/api/admins";
     const params = [];
     if (locationFilter) params.push(`locationId=${locationFilter}`);
     if (departementFilter) params.push(`departementId=${departementFilter}`);

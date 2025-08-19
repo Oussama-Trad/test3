@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/partenariats';
+const API_URL = 'http://172.20.10.2:5000/api/partenariats';
 
 export const getAllPartenariats = async () => {
   try {

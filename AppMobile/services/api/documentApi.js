@@ -1,5 +1,5 @@
 // Service pour les appels API liés aux documents
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://172.20.10.2:5000/api';
 
 export async function getDocumentTypes(token) {
   const res = await fetch(`${API_URL}/document-types`, {

@@ -4,7 +4,7 @@ import { UserContext } from './UserContext';
 import { getDocumentRequests } from '../services/api/documentApi';
 import { getReclamations } from '../views/screens/reclamationApi';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://172.20.10.2:5000/api';
 
 export const NotificationsContext = createContext({
   notifications: [],

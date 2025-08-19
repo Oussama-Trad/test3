@@ -17,7 +17,9 @@ from documents import bp as documents_bp
 from actualites import bp as actualites_bp
 
 # Pour l'upload de fichiers
+
 from werkzeug.utils import secure_filename
+from flask import send_from_directory
 
 # Connexion à la collection messages
 client = MongoClient('mongodb+srv://oussamatrzd19:oussama123@leoniapp.grhnzgz.mongodb.net/')
@@ -29,7 +31,7 @@ reclamations_collection = db['reclamations']
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {
-    "origins": ["http://localhost:8081", "http://localhost:19006", "*"],
+    "origins": ["http://172.20.10.2:8081", "http://localhost:19006", "*"],
     "allow_headers": "*",
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }}, supports_credentials=True)
@@ -50,6 +52,11 @@ app.register_blueprint(actualites_bp)
 app.register_blueprint(bp_events)
 
 # --- ROUTE PARTENARIATS (MOBILE) ---
+
+# --- SERVE UPLOADS STATIC FILES ---
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 @app.route('/api/partenariats', methods=['GET'])
 def get_partenariats():
     try:
@@ -607,6 +614,14 @@ def get_employee_conversations():
                     admin = db.superadmin.find_one({'id': admin_id})
                 if not admin:
                     admin = db.superadmin.find_one({'_id': admin_id})
+            # Correction ici : vérifier le type de lastMessage
+            last_message = conv.get('lastMessage', {})
+            if isinstance(last_message, dict):
+                last_content = last_message.get('content', '')
+                last_timestamp = last_message.get('timestamp', '')
+            else:
+                last_content = ''
+                last_timestamp = ''
             result.append({
                 'admin': {
                     '_id': str(admin_id) if admin_id else '',
@@ -615,8 +630,8 @@ def get_employee_conversations():
                     'locationId': str(admin.get('location', '')) if admin else '',
                     'departementId': str(admin.get('departement', '')) if admin else '',
                 },
-                'lastMessage': conv.get('lastMessage', {}).get('content', ''),
-                'lastDate': conv.get('lastMessage', {}).get('timestamp', ''),
+                'lastMessage': last_content,
+                'lastDate': last_timestamp,
             })
         return jsonify(result)
     except Exception as e:

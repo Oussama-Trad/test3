@@ -59,7 +59,7 @@ const ChatConversation = ({ route, navigation }) => {
 
   const fetchMessages = async () => {
     try {
-      const url = `http://localhost:5000/api/messages?user1=${CURRENT_USER_ID}&user2=${admin._id}`;
+      const url = `http://172.20.10.2:5000/api/messages?user1=${CURRENT_USER_ID}&user2=${admin._id}`;
       const res = await fetch(url);
       const data = await res.json();
       setMessages(data);
@@ -99,7 +99,7 @@ const ChatConversation = ({ route, navigation }) => {
     setIsTyping(true);
 
     try {
-      await fetch("http://localhost:5000/api/messages", {
+      await fetch("http://172.20.10.2:5000/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

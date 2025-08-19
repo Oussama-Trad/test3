@@ -21,7 +21,7 @@ import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://172.20.10.2:5000/api";
 const { width, height } = Dimensions.get("window");
 
 // Fonction utilitaire pour sécuriser le rendu des valeurs
@@ -60,7 +60,14 @@ const ActualitesScreen = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setActualites(data.actualites || []);
+      // Correction : si data n'a pas la clé actualites, on tente data directement (pour compatibilité web/mobile)
+      if (Array.isArray(data.actualites)) {
+        setActualites(data.actualites);
+      } else if (Array.isArray(data)) {
+        setActualites(data);
+      } else {
+        setActualites([]);
+      }
     } catch (e) {
       console.error("Erreur lors du chargement des actualités:", e);
       setActualites([]);
@@ -141,12 +148,11 @@ const ActualitesScreen = () => {
                   style={styles.image}
                   resizeMode="cover"
                 />
-              ) : (
-                <View style={styles.placeholderImage}>
-                  <Ionicons name="image-outline" size={32} color="#9CA3AF" />
-                </View>
-              )}
-              <View style={styles.imageOverlay} />
+                ) : (
+                  <View style={styles.placeholderImage}>
+                    <Ionicons name="image-outline" size={32} color="#9CA3AF" />
+                  </View>
+                )}
             </View>
 
             <View style={styles.textContainer}>
@@ -389,15 +395,14 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     backgroundColor: "#F3F4F6",
+    // Ajout d'un effet de clarté
+    opacity: 1,
+    // Pour forcer la netteté sur certains appareils
+    borderRadius: 0,
+    // Supprimer tout filtre ou effet
+    // Pas de filter: brightness ici, mais on s'assure qu'il n'y a pas d'assombrissement
   },
-  imageOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 40,
-    backgroundColor: "rgba(0,0,0,0.1)",
-  },
+
   placeholderImage: {
     width: "100%",
     height: "100%",
